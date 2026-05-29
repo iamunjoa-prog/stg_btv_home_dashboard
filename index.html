@@ -482,20 +482,20 @@ let BN_RULES = [
 
 /* 설정 시트 CSV 파싱 → CB_RULES / BN_RULES 덮어쓰기 */
 function parseSettingsCSV(csv) {
-  const rows = csvRows(csv);
-  if(!rows.length) return;
+  if(!csv) return;
+  const lines = csv.trim().split('\n').map(parseCSVLine).filter(r=>r&&r.length>=2);
+  if(!lines.length) return;
   const cbRules=[], bnRules=[];
-  // 첫 행이 헤더면 스킵 (A열이 'block'/'banner'가 아닌 경우)
-  const dataRows = rows[0][0].trim().toLowerCase() === 'block' || rows[0][0].trim().toLowerCase() === 'banner'
-    ? rows : rows.slice(1);
-  dataRows.forEach(row => {
+  lines.forEach(row => {
     const [type, key, label, color, incStr, excStr] = row;
     if(!type||!key) return;
+    const t = type.trim().toLowerCase();
+    if(t!=='block' && t!=='banner') return; // 헤더 등 스킵
     const include = (incStr||'').split('|').map(s=>s.trim()).filter(Boolean);
     const exclude = (excStr||'').split('|').map(s=>s.trim()).filter(Boolean);
-    const rule = { key:key.trim(), label:label.trim(), color:(color||'').trim(), include, exclude };
-    if(type.trim()==='block')  cbRules.push(rule);
-    if(type.trim()==='banner') bnRules.push(rule);
+    const rule = { key:key.trim(), label:(label||'').trim(), color:(color||'').trim(), include, exclude };
+    if(t==='block')  cbRules.push(rule);
+    if(t==='banner') bnRules.push(rule);
   });
   if(cbRules.length) CB_RULES = cbRules;
   if(bnRules.length) BN_RULES = bnRules;
