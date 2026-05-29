@@ -485,7 +485,10 @@ function parseSettingsCSV(csv) {
   const rows = csvRows(csv);
   if(!rows.length) return;
   const cbRules=[], bnRules=[];
-  rows.forEach(row => {
+  // 첫 행이 헤더면 스킵 (A열이 'block'/'banner'가 아닌 경우)
+  const dataRows = rows[0][0].trim().toLowerCase() === 'block' || rows[0][0].trim().toLowerCase() === 'banner'
+    ? rows : rows.slice(1);
+  dataRows.forEach(row => {
     const [type, key, label, color, incStr, excStr] = row;
     if(!type||!key) return;
     const include = (incStr||'').split('|').map(s=>s.trim()).filter(Boolean);
