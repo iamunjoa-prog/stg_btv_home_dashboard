@@ -698,11 +698,11 @@ async function loadAll() {
       fetchTab(CFG.tabs.tdbEv),
       fetchTab(CFG.tabs.tdbCt),
       fetchTab(CFG.tabs.cbRaw),
-      fetchTab(CFG.tabs.settings),
+      fetchTab(CFG.tabs.settings).catch(()=>null),
     ]);
 
-    // 설정 시트 먼저 파싱 (분류 규칙 적용)
-    parseSettingsCSV(csvSettings);
+    // 설정 시트 먼저 파싱 (분류 규칙 적용) - 실패 시 기본값 유지
+    if(csvSettings) parseSettingsCSV(csvSettings);
 
     HD  = parseHomeCSV(csvHome);
     TDB = parseTdbCSV(csvEv, csvCt);
