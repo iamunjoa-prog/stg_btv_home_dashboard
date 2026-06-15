@@ -417,6 +417,9 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
           </div>
         </div>
       </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:-8px;margin-bottom:4px">
+        <button class="bsm" onclick="p2cmpReset()">✕ 초기화</button>
+      </div>
       <div id="p2cmp-result">
         <div style="text-align:center;padding:40px 0;color:var(--t3);font-size:13px">배너 2개를 선택하면 지표를 비교합니다.</div>
       </div>
@@ -543,6 +546,9 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
             <div id="p4cmp-b-drop" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--sf);border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;z-index:200;font-size:12px"></div>
           </div>
         </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:-8px;margin-bottom:4px">
+        <button class="bsm" onclick="p4cmpReset()">✕ 초기화</button>
       </div>
       <div id="p4cmp-result">
         <div style="text-align:center;padding:40px 0;color:var(--t3);font-size:13px">배너 2개를 선택하면 지표를 비교합니다.</div>
@@ -2877,8 +2883,8 @@ function renderCmpResult(page) {
         <button class="tb" onclick="cmpSwitchMetric('${page}','rev',this)">매출</button>
       </div>
     </div>
-    <div style="background:var(--sf2);border-radius:12px;padding:16px;border:1px solid var(--bd);margin-bottom:10px">
-      <canvas id="${cmpChartId}" height="200"></canvas>
+    <div style="background:var(--sf2);border-radius:12px;padding:12px 16px;border:1px solid var(--bd);margin-bottom:10px">
+      <canvas id="${cmpChartId}" height="90"></canvas>
     </div>
     <div style="display:flex;gap:16px;margin-bottom:4px">
       <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--t2)">
@@ -2895,6 +2901,29 @@ function renderCmpResult(page) {
 
   /* 데이터 캐시 (탭 전환용) */
   window[`_cmpData_${page}`] = {dailyA, dailyB};
+}
+
+function p2cmpReset() {
+  p2cmpSel = {a:null, b:null};
+  ['a','b'].forEach(ab => {
+    const inp = document.getElementById(`p2cmp-${ab}-inp`);
+    if(inp) inp.value = '';
+    p2cmpHideDrop(ab);
+  });
+  const r = document.getElementById('p2cmp-result');
+  if(r) r.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--t3);font-size:13px">배너 2개를 선택하면 지표를 비교합니다.</div>`;
+  if(window.p2cmpChartInst) { window.p2cmpChartInst.destroy(); window.p2cmpChartInst=null; }
+}
+function p4cmpReset() {
+  p4cmpSel = {a:null, b:null};
+  ['a','b'].forEach(ab => {
+    const inp = document.getElementById(`p4cmp-${ab}-inp`);
+    if(inp) inp.value = '';
+    p4cmpHideDrop(ab);
+  });
+  const r = document.getElementById('p4cmp-result');
+  if(r) r.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--t3);font-size:13px">배너 2개를 선택하면 지표를 비교합니다.</div>`;
+  if(window.p4cmpChartInst) { window.p4cmpChartInst.destroy(); window.p4cmpChartInst=null; }
 }
 
 function cmpSwitchMetric(page, metric, btn) {
