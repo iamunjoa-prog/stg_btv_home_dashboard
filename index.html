@@ -381,6 +381,46 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
         </div>
       </div>
     </div>
+
+    <!-- ⑤ 배너 Data 비교 (P2) -->
+    <div class="sec" style="justify-content:space-between">
+      <span>⑤ 배너 Data 비교 <span class="sec-b">배너 2개 선택 · 게시 후 N일차 기준</span></span>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:6px">
+            <span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#E6F1FB;color:#185FA5;font-size:10px;font-weight:700;margin-right:6px">A</span>첫 번째 배너
+          </div>
+          <div style="position:relative">
+            <input id="p2cmp-a-inp" type="text" placeholder="배너명 검색..." autocomplete="off"
+              style="width:100%;padding:8px 36px 8px 12px;border:1px solid var(--bd);border-radius:9px;font-size:13px;font-family:inherit;color:var(--t1);background:var(--sf2);outline:none;transition:border-color .15s;box-sizing:border-box"
+              onfocus="this.style.borderColor='var(--blue)';p2cmpShowDrop('a')"
+              oninput="p2cmpFilter('a',this.value)"
+              onblur="setTimeout(()=>p2cmpHideDrop('a'),180)">
+            <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:13px;pointer-events:none">▾</span>
+            <div id="p2cmp-a-drop" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--sf);border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;z-index:200;font-size:12px"></div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:6px">
+            <span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#EEEDFE;color:#534AB7;font-size:10px;font-weight:700;margin-right:6px">B</span>두 번째 배너
+          </div>
+          <div style="position:relative">
+            <input id="p2cmp-b-inp" type="text" placeholder="배너명 검색..." autocomplete="off"
+              style="width:100%;padding:8px 36px 8px 12px;border:1px solid var(--bd);border-radius:9px;font-size:13px;font-family:inherit;color:var(--t1);background:var(--sf2);outline:none;transition:border-color .15s;box-sizing:border-box"
+              onfocus="this.style.borderColor='var(--blue)';p2cmpShowDrop('b')"
+              oninput="p2cmpFilter('b',this.value)"
+              onblur="setTimeout(()=>p2cmpHideDrop('b'),180)">
+            <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:13px;pointer-events:none">▾</span>
+            <div id="p2cmp-b-drop" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--sf);border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;z-index:200;font-size:12px"></div>
+          </div>
+        </div>
+      </div>
+      <div id="p2cmp-result">
+        <div style="text-align:center;padding:40px 0;color:var(--t3);font-size:13px">배너 2개를 선택하면 지표를 비교합니다.</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -466,6 +506,46 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
         <div style="text-align:center;padding:40px 0;color:var(--t3);font-size:13px">
           배너를 선택하면 게시기간 전체의 일평균 데이터를 확인할 수 있습니다.
         </div>
+      </div>
+    </div>
+
+    <!-- ⑤ 배너 Data 비교 (P4) -->
+    <div class="sec" style="justify-content:space-between">
+      <span>⑤ 배너 Data 비교 <span class="sec-b">배너 2개 선택 · 게시 후 N일차 기준</span></span>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:6px">
+            <span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#E6F1FB;color:#185FA5;font-size:10px;font-weight:700;margin-right:6px">A</span>첫 번째 배너
+          </div>
+          <div style="position:relative">
+            <input id="p4cmp-a-inp" type="text" placeholder="배너명 검색..." autocomplete="off"
+              style="width:100%;padding:8px 36px 8px 12px;border:1px solid var(--bd);border-radius:9px;font-size:13px;font-family:inherit;color:var(--t1);background:var(--sf2);outline:none;transition:border-color .15s;box-sizing:border-box"
+              onfocus="this.style.borderColor='var(--blue)';p4cmpShowDrop('a')"
+              oninput="p4cmpFilter('a',this.value)"
+              onblur="setTimeout(()=>p4cmpHideDrop('a'),180)">
+            <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:13px;pointer-events:none">▾</span>
+            <div id="p4cmp-a-drop" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--sf);border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;z-index:200;font-size:12px"></div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:6px">
+            <span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#EEEDFE;color:#534AB7;font-size:10px;font-weight:700;margin-right:6px">B</span>두 번째 배너
+          </div>
+          <div style="position:relative">
+            <input id="p4cmp-b-inp" type="text" placeholder="배너명 검색..." autocomplete="off"
+              style="width:100%;padding:8px 36px 8px 12px;border:1px solid var(--bd);border-radius:9px;font-size:13px;font-family:inherit;color:var(--t1);background:var(--sf2);outline:none;transition:border-color .15s;box-sizing:border-box"
+              onfocus="this.style.borderColor='var(--blue)';p4cmpShowDrop('b')"
+              oninput="p4cmpFilter('b',this.value)"
+              onblur="setTimeout(()=>p4cmpHideDrop('b'),180)">
+            <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:13px;pointer-events:none">▾</span>
+            <div id="p4cmp-b-drop" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--sf);border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;z-index:200;font-size:12px"></div>
+          </div>
+        </div>
+      </div>
+      <div id="p4cmp-result">
+        <div style="text-align:center;padding:40px 0;color:var(--t3);font-size:13px">배너 2개를 선택하면 지표를 비교합니다.</div>
       </div>
     </div>
   </div>
@@ -2617,6 +2697,281 @@ function downloadAllP4BannerAvg() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+/* ═══════════════════════════════════════
+   ⑤ 배너 Data 비교 — P2 (TDB) & P4 (CB)
+═══════════════════════════════════════ */
+
+/* ── 공통 유틸 ── */
+const CMP_COLOR_A = '#378ADD';
+const CMP_COLOR_B = '#7F77DD';
+let p2cmpChartInst = null;
+let p4cmpChartInst = null;
+let p2cmpSel = {a:null, b:null};
+let p4cmpSel = {a:null, b:null};
+
+/* ── P2 드롭다운 ── */
+function p2cmpShowDrop(ab) { p2cmpFilter(ab, document.getElementById(`p2cmp-${ab}-inp`).value); }
+function p2cmpHideDrop(ab) { const d=document.getElementById(`p2cmp-${ab}-drop`); if(d) d.style.display='none'; }
+function p2cmpFilter(ab, q) {
+  const dd = document.getElementById(`p2cmp-${ab}-drop`);
+  if(!dd||!TDB) return;
+  const all = getAllBannerAvgData();
+  const filtered = q ? all.filter(r=>r.banner.toLowerCase().includes(q.toLowerCase())) : all;
+  if(!filtered.length) { dd.style.display='none'; return; }
+  const typeColor={mass:'#378ADD',target:'#E24B4A',content:'#639922'};
+  const typeLabel={mass:'Mass',target:'Target',content:'콘텐츠'};
+  dd.innerHTML = filtered.slice(0,80).map(r =>
+    `<div style="padding:8px 12px;cursor:pointer;border-bottom:1px solid rgba(0,0,0,.04);transition:background .1s;display:flex;align-items:center;gap:8px"
+      onmousedown="p2cmpSelect('${ab}','${r.banner.replace(/'/g,"\\'").replace(/\\/g,'\\\\')}')"
+      onmouseover="this.style.background='var(--sf2)'" onmouseout="this.style.background=''">
+      <span style="font-size:10px;font-weight:600;padding:2px 6px;border-radius:10px;background:${typeColor[r.type]||'#86868b'}22;color:${typeColor[r.type]||'#86868b'};flex-shrink:0">${typeLabel[r.type]||r.type}</span>
+      <span style="flex:1;font-size:12px;color:var(--t1)">${r.banner}</span>
+      <span style="font-size:11px;color:var(--t3);flex-shrink:0">${r.dayCount}일</span>
+    </div>`
+  ).join('');
+  dd.style.display = 'block';
+}
+function p2cmpSelect(ab, name) {
+  document.getElementById(`p2cmp-${ab}-inp`).value = name;
+  p2cmpHideDrop(ab);
+  p2cmpSel[ab] = name;
+  if(p2cmpSel.a && p2cmpSel.b) renderCmpResult('p2');
+}
+
+/* ── P4 드롭다운 ── */
+function p4cmpShowDrop(ab) { p4cmpFilter(ab, document.getElementById(`p4cmp-${ab}-inp`).value); }
+function p4cmpHideDrop(ab) { const d=document.getElementById(`p4cmp-${ab}-drop`); if(d) d.style.display='none'; }
+function p4cmpFilter(ab, q) {
+  const dd = document.getElementById(`p4cmp-${ab}-drop`);
+  if(!dd||!CB) return;
+  const all = getAllP4BannerAvgData();
+  const filtered = q ? all.filter(r=>r.block.toLowerCase().includes(q.toLowerCase())) : all;
+  if(!filtered.length) { dd.style.display='none'; return; }
+  const ruleMap={}; BN_RULES.forEach(r=>ruleMap[r.key]=r);
+  dd.innerHTML = filtered.slice(0,80).map(r => {
+    const rule = ruleMap[r.bnrSrc]||{color:'#86868b',label:'배너'};
+    return `<div style="padding:8px 12px;cursor:pointer;border-bottom:1px solid rgba(0,0,0,.04);transition:background .1s;display:flex;align-items:center;gap:8px"
+      onmousedown="p4cmpSelect('${ab}','${r.block.replace(/'/g,"\\'").replace(/\\/g,'\\\\')}')"
+      onmouseover="this.style.background='var(--sf2)'" onmouseout="this.style.background=''">
+      <span style="font-size:10px;font-weight:600;padding:2px 6px;border-radius:10px;background:${rule.color}22;color:${rule.color};flex-shrink:0">${rule.label}</span>
+      <span style="flex:1;font-size:12px;color:var(--t1)">${r.block}</span>
+      <span style="font-size:11px;color:var(--t3);flex-shrink:0">${r.dayCount}일</span>
+    </div>`;
+  }).join('');
+  dd.style.display = 'block';
+}
+function p4cmpSelect(ab, name) {
+  document.getElementById(`p4cmp-${ab}-inp`).value = name;
+  p4cmpHideDrop(ab);
+  p4cmpSel[ab] = name;
+  if(p4cmpSel.a && p4cmpSel.b) renderCmpResult('p4');
+}
+
+/* ── 일별 데이터 추출 (N일차 정렬) ── */
+function getCmpDailyByDay(rows, keyField, name) {
+  /* keyField: 'banner'(P2) | 'block'(P4) */
+  const filtered = rows.filter(d => d[keyField] === name);
+  const map = {};
+  filtered.forEach(d => {
+    const k = d.date.toISOString().slice(0,10);
+    if(!map[k]) map[k] = {uv:0, pv:0, rev:0, dateObj:d.date};
+    map[k].uv  += d.uv;
+    map[k].pv  += d.pv;
+    map[k].rev += d.rev;
+  });
+  return Object.entries(map)
+    .sort((a,b)=>a[1].dateObj - b[1].dateObj)
+    .map(([date, v], i) => ({day: i+1, date, uv: v.uv, pv: v.pv, rev: v.rev}));
+}
+
+/* ── 공통 비교 렌더 ── */
+function renderCmpResult(page) {
+  const isP2 = page === 'p2';
+  const nameA = isP2 ? p2cmpSel.a : p4cmpSel.a;
+  const nameB = isP2 ? p2cmpSel.b : p4cmpSel.b;
+  const resultEl = document.getElementById(`${page}cmp-result`);
+  if(!resultEl) return;
+
+  /* 데이터 소스 */
+  const allRows  = isP2 ? TDB.all : CB.all;
+  const keyField = isP2 ? 'banner' : 'block';
+  const avgDataA = isP2
+    ? getAllBannerAvgData().find(x=>x.banner===nameA)
+    : getAllP4BannerAvgData().find(x=>x.block===nameA);
+  const avgDataB = isP2
+    ? getAllBannerAvgData().find(x=>x.banner===nameB)
+    : getAllP4BannerAvgData().find(x=>x.block===nameB);
+
+  if(!avgDataA || !avgDataB) {
+    resultEl.innerHTML=`<div style="color:var(--t3);text-align:center;padding:20px">데이터를 불러올 수 없습니다.</div>`;
+    return;
+  }
+
+  const dailyA = getCmpDailyByDay(allRows, keyField, nameA);
+  const dailyB = getCmpDailyByDay(allRows, keyField, nameB);
+
+  /* 일평균 */
+  const avgA = { uv: avgDataA.avgUV, pv: avgDataA.avgPV, rev: isP2 ? avgDataA.avgRev : avgDataA.avgRev };
+  const avgB = { uv: avgDataB.avgUV, pv: avgDataB.avgPV, rev: avgDataB.avgRev };
+
+  const winTag = (va, vb, ab) => {
+    if(Math.abs(va-vb)<0.01) return '';
+    const winner = va>vb ? 'A' : 'B';
+    const color  = winner==='A' ? '#185FA5' : '#534AB7';
+    const bg     = winner==='A' ? '#E6F1FB' : '#EEEDFE';
+    if(winner !== ab) return '';
+    return `<span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;background:${bg};color:${color}">▲ 우세</span>`;
+  };
+
+  const fmtD = s => { if(!s) return '-'; const p=s.split('-'); return `${+p[1]}/${+p[2]}`; };
+
+  const metricCard = (label, vA, vB, fmt) => {
+    const fA = fmt(vA), fB = fmt(vB);
+    return `
+    <div style="background:var(--sf2);border-radius:12px;padding:12px 14px;border:1px solid var(--bd)">
+      <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px">${label}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span style="font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px;background:#E6F1FB;color:#185FA5">A</span>
+        <span style="font-size:16px;font-weight:700;color:#185FA5">${fA}</span>
+        ${winTag(vA,vB,'A')}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px;background:#EEEDFE;color:#534AB7">B</span>
+        <span style="font-size:16px;font-weight:700;color:#534AB7">${fB}</span>
+        ${winTag(vA,vB,'B')}
+      </div>
+    </div>`;
+  };
+
+  const cmpChartId = `${page}-cmp-chart`;
+
+  resultEl.innerHTML = `
+    <!-- 게시기간 정보 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div style="background:#E6F1FB;border-radius:10px;padding:10px 14px">
+        <div style="font-size:10px;font-weight:700;color:#185FA5;margin-bottom:3px">A · ${nameA}</div>
+        <div style="font-size:12px;color:#185FA5">${fmtD(avgDataA.startDate)} ~ ${fmtD(avgDataA.endDate)}</div>
+        <div style="font-size:11px;color:#378ADD;margin-top:2px">총 ${isP2?avgDataA.dayCount:avgDataA.dayCount}일 운영</div>
+      </div>
+      <div style="background:#EEEDFE;border-radius:10px;padding:10px 14px">
+        <div style="font-size:10px;font-weight:700;color:#534AB7;margin-bottom:3px">B · ${nameB}</div>
+        <div style="font-size:12px;color:#534AB7">${fmtD(avgDataB.startDate)} ~ ${fmtD(avgDataB.endDate)}</div>
+        <div style="font-size:11px;color:#7F77DD;margin-top:2px">총 ${isP2?avgDataB.dayCount:avgDataB.dayCount}일 운영</div>
+      </div>
+    </div>
+
+    <!-- 일평균 지표 비교 카드 -->
+    <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:8px">일평균 지표 비교</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px">
+      ${metricCard('일평균 UV',  avgA.uv,  avgB.uv,  FC)}
+      ${metricCard('일평균 PV',  avgA.pv,  avgB.pv,  FC)}
+      ${metricCard('일평균 매출', avgA.rev, avgB.rev, NC)}
+    </div>
+
+    <!-- 일별 추이 비교 라인 차트 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:var(--t2)">일별 추이 비교 <span style="font-size:11px;font-weight:400;color:var(--t3)">(X축: 게시 후 N일차)</span></div>
+      <div style="display:flex;gap:2px;background:var(--sf2);border-radius:8px;padding:2px" id="${page}-cmp-tabs">
+        <button class="tb on" onclick="cmpSwitchMetric('${page}','uv',this)">UV</button>
+        <button class="tb" onclick="cmpSwitchMetric('${page}','pv',this)">PV</button>
+        <button class="tb" onclick="cmpSwitchMetric('${page}','rev',this)">매출</button>
+      </div>
+    </div>
+    <div style="background:var(--sf2);border-radius:12px;padding:16px;border:1px solid var(--bd);margin-bottom:10px">
+      <canvas id="${cmpChartId}" height="200"></canvas>
+    </div>
+    <div style="display:flex;gap:16px;margin-bottom:4px">
+      <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--t2)">
+        <div style="width:20px;height:2px;background:${CMP_COLOR_A};border-radius:1px"></div>A · ${nameA}
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--t2)">
+        <div style="width:20px;height:2px;background:${CMP_COLOR_B};border-radius:1px;border-top:2px dashed ${CMP_COLOR_B}"></div>B · ${nameB}
+      </div>
+    </div>
+  `;
+
+  /* 초기 차트 그리기 */
+  drawCmpChart(page, dailyA, dailyB, 'uv');
+
+  /* 데이터 캐시 (탭 전환용) */
+  window[`_cmpData_${page}`] = {dailyA, dailyB};
+}
+
+function cmpSwitchMetric(page, metric, btn) {
+  btn.closest(`#${page}-cmp-tabs`).querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const d = window[`_cmpData_${page}`];
+  if(d) drawCmpChart(page, d.dailyA, d.dailyB, metric);
+}
+
+function drawCmpChart(page, dailyA, dailyB, metric) {
+  const instKey = page==='p2' ? 'p2cmpChartInst' : 'p4cmpChartInst';
+  if(window[instKey]) { window[instKey].destroy(); window[instKey]=null; }
+
+  const maxLen = Math.max(dailyA.length, dailyB.length);
+  const labels = Array.from({length:maxLen}, (_,i)=>`${i+1}일차`);
+
+  const metricLabel = {uv:'UV', pv:'PV', rev:'매출'};
+  const fmtFn = metric==='rev' ? NC : FC;
+
+  const datasetA = {
+    label: `A (UV)`,
+    data: dailyA.map(d=>d[metric]),
+    borderColor: CMP_COLOR_A,
+    backgroundColor: CMP_COLOR_A + '18',
+    fill: false,
+    tension: .35,
+    pointRadius: dailyA.length > 60 ? 0 : 3,
+    pointHoverRadius: 5,
+    borderWidth: 2.5,
+    spanGaps: true
+  };
+  const datasetB = {
+    label: `B (UV)`,
+    data: dailyB.map(d=>d[metric]),
+    borderColor: CMP_COLOR_B,
+    backgroundColor: CMP_COLOR_B + '18',
+    fill: false,
+    tension: .35,
+    borderDash: [5,3],
+    pointRadius: dailyB.length > 60 ? 0 : 3,
+    pointHoverRadius: 5,
+    borderWidth: 2.5,
+    spanGaps: true
+  };
+
+  const el = document.getElementById(`${page}-cmp-chart`);
+  if(!el) return;
+  setTimeout(() => {
+    window[instKey] = new Chart(el.getContext('2d'), {
+      type: 'line',
+      data: { labels, datasets: [datasetA, datasetB] },
+      options: {
+        responsive: true, maintainAspectRatio: true,
+        interaction: {mode:'index', intersect:false},
+        plugins: {
+          legend: {display:false},
+          tooltip: {
+            padding:10, cornerRadius:8,
+            callbacks:{
+              title: ctx => ctx[0].label,
+              label: ctx => {
+                const ab = ctx.datasetIndex===0 ? 'A' : 'B';
+                return ` ${ab}: ${fmtFn(ctx.parsed.y)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {grid:{display:false}, ticks:{font:{size:9}, color:'#86868b', maxTicksLimit:20, maxRotation:0}},
+          y: {grid:{color:'rgba(0,0,0,.05)'}, border:{display:false},
+              ticks:{font:{size:10}, color:'#86868b', callback: v=>FM(v)}}
+        }
+      }
+    });
+  }, 50);
+}
+
 (async () => {
   try {
     const saved = localStorage.getItem('dashCfg');
