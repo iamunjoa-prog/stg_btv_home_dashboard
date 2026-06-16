@@ -398,6 +398,7 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
           <div id="bnr-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--sf);border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;z-index:200;font-size:12px"></div>
         </div>
         <div id="bnr-type-badge" style="display:none;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;background:rgba(0,113,227,.08);color:var(--blue)"></div>
+        <button class="bsm" id="btn-bnr-graph" style="display:none;white-space:nowrap" onclick="openBnrChartModal('p2')">📈 그래프 확인</button>
         <button class="bsm" onclick="clearBnrSelect()" style="white-space:nowrap">✕ 초기화</button>
       </div>
 
@@ -502,6 +503,7 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
           <div id="p4-bnr-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--sf);border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;z-index:200;font-size:12px"></div>
         </div>
         <div id="p4-bnr-type-badge" style="display:none;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;background:rgba(0,113,227,.08);color:var(--blue)"></div>
+        <button class="bsm" id="btn-p4-bnr-graph" style="display:none;white-space:nowrap" onclick="openBnrChartModal('p4')">📈 그래프 확인</button>
         <button class="bsm" onclick="clearP4BnrSelect()">✕ 초기화</button>
       </div>
       <!-- 선택 배너 결과 -->
@@ -530,6 +532,26 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
   </div>
 </div>
 
+
+<!-- ════ 배너 일별 그래프 팝업 ════ -->
+<div id="bnrChartOv" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);align-items:center;justify-content:center" onclick="if(event.target===this)closeBnrChartModal()">
+  <div style="background:var(--sf);border-radius:20px;box-shadow:0 32px 80px rgba(0,0,0,.25);padding:28px;width:760px;max-width:calc(100vw - 32px);max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--t1)" id="bnrChartTitle">일별 추이</div>
+        <div style="font-size:12px;color:var(--t3);margin-top:2px" id="bnrChartSub"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="bsm" onclick="saveBnrChartImage()">📷 이미지 저장</button>
+        <button style="font-size:18px;line-height:1;border:none;background:transparent;color:var(--t3);cursor:pointer;padding:4px 8px" onclick="closeBnrChartModal()">✕</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap" id="bnrChartLegend"></div>
+    <div style="background:var(--sf2);border-radius:14px;padding:16px 18px;border:1px solid var(--bd)">
+      <canvas id="bnr-popup-chart" height="160"></canvas>
+    </div>
+  </div>
+</div>
 
 <div class="detail-ov" id="detailOv" onclick="if(event.target===this)closeDetail()">
   <div class="detail-modal">
@@ -2475,6 +2497,96 @@ function selectBanner(bannerName) {
   renderBnrDetail(bannerName);
 }
 
+/* ═══════════════════════════════════════
+   배너 일별 그래프 팝업
+═══════════════════════════════════════ */
+function openBnrChartModal(page) {
+  const cache = window._bnrChartCache;
+  if(!cache || cache.page !== page) return;
+
+  const { name, tc, tl, dailyMap } = cache;
+  const dailyDates = Object.keys(dailyMap).sort();
+  const fmtAxisD = s => { const p=s.split('-'); return `${+p[1]}/${+p[2]}`; };
+
+  /* 제목 / 부제 */
+  document.getElementById('bnrChartTitle').textContent = `${name} — 일별 추이`;
+  const dateRange = dailyDates.length
+    ? `${dailyDates[0]} ~ ${dailyDates[dailyDates.length-1]} (${dailyDates.length}일)`
+    : '';
+  document.getElementById('bnrChartSub').textContent = dateRange;
+
+  /* 범례 */
+  document.getElementById('bnrChartLegend').innerHTML = [
+    {color:tc,     label:'UV',  dash:''},
+    {color:'#34c759', label:'PV',  dash:'border-top:2px dashed #34c759'},
+    {color:'#ff9f0a', label:'매출', dash:'border-top:2px dotted #ff9f0a'},
+  ].map(l=>`<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--t2)">
+    <div style="width:22px;height:2px;background:${l.color};border-radius:1px;${l.dash}"></div>${l.label}
+  </div>`).join('');
+
+  /* 팝업 표시 */
+  const ov = document.getElementById('bnrChartOv');
+  ov.style.display = 'flex';
+
+  /* 차트 그리기 */
+  setTimeout(()=>{
+    const el = document.getElementById('bnr-popup-chart');
+    if(!el) return;
+    if(window._bnrPopupChart) { window._bnrPopupChart.destroy(); window._bnrPopupChart=null; }
+    window._bnrPopupChart = new Chart(el.getContext('2d'),{
+      type:'line',
+      data:{
+        labels: dailyDates.map(fmtAxisD),
+        datasets:[
+          {label:'UV',  data:dailyDates.map(k=>dailyMap[k].uv),  borderColor:tc,        backgroundColor:tc+'18',     fill:false,tension:.35,pointRadius:dailyDates.length>60?0:3,pointHoverRadius:5,borderWidth:2,yAxisID:'y'},
+          {label:'PV',  data:dailyDates.map(k=>dailyMap[k].pv),  borderColor:'#34c759', backgroundColor:'#34c75918', fill:false,tension:.35,pointRadius:dailyDates.length>60?0:3,pointHoverRadius:5,borderWidth:2,borderDash:[5,3],yAxisID:'y'},
+          {label:'매출', data:dailyDates.map(k=>dailyMap[k].rev), borderColor:'#ff9f0a', backgroundColor:'#ff9f0a18',fill:false,tension:.35,pointRadius:dailyDates.length>60?0:3,pointHoverRadius:5,borderWidth:2,borderDash:[2,3],yAxisID:'y2'},
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:true,
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{display:false},
+          tooltip:{padding:10,cornerRadius:8,callbacks:{
+            title: ctx => dailyDates[ctx[0].dataIndex] || ctx[0].label,
+            label: ctx => {
+              const lbl = ['UV','PV','매출'][ctx.datasetIndex];
+              const fmt = ctx.datasetIndex===2 ? NC : FC;
+              return ` ${lbl}: ${fmt(ctx.parsed.y)}`;
+            }
+          }}
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{font:{size:9},color:'#86868b',maxTicksLimit:20,maxRotation:0}},
+          y:{position:'left',grid:{color:'rgba(0,0,0,.05)'},border:{display:false},
+             ticks:{font:{size:10},color:'#86868b',callback:v=>FM(v)},
+             title:{display:true,text:'UV / PV',font:{size:10},color:'#86868b'}},
+          y2:{position:'right',grid:{display:false},border:{display:false},
+              ticks:{font:{size:10},color:'#ff9f0a',callback:v=>FM(v)},
+              title:{display:true,text:'매출',font:{size:10},color:'#ff9f0a'}}
+        }
+      }
+    });
+  }, 60);
+}
+
+function closeBnrChartModal() {
+  document.getElementById('bnrChartOv').style.display = 'none';
+  if(window._bnrPopupChart) { window._bnrPopupChart.destroy(); window._bnrPopupChart=null; }
+}
+
+function saveBnrChartImage() {
+  if(!window._bnrPopupChart) return;
+  const cache = window._bnrChartCache;
+  const name = cache ? cache.name.slice(0,20) : '배너';
+  const url = window._bnrPopupChart.toBase64Image('image/png', 1);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${name}_일별추이_${new Date().toISOString().slice(0,10)}.png`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
 function clearBnrSelect() {
   const inp = document.getElementById('bnr-search-inp');
   if(inp) inp.value = '';
@@ -2483,6 +2595,9 @@ function clearBnrSelect() {
   if(area) area.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--t3);font-size:13px">배너를 선택하면 게시기간 전체의 일평균 데이터를 확인할 수 있습니다.</div>`;
   const badge = document.getElementById('bnr-type-badge');
   if(badge) badge.style.display='none';
+  const graphBtn = document.getElementById('btn-bnr-graph');
+  if(graphBtn) graphBtn.style.display='none';
+  window._bnrChartCache = null;
 }
 
 /* 선택 배너 상세 렌더 */
@@ -2573,20 +2688,10 @@ function renderBnrDetail(bannerName) {
         </tbody>
       </table>
     </div>
-    <!-- 일별 추이 그래프 -->
-    <div style="margin-top:18px">
-      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:8px">일별 추이 <span style="font-size:11px;font-weight:400;color:var(--t3)">(X축: 날짜)</span></div>
-      <div style="background:var(--sf2);border-radius:12px;padding:14px 16px;border:1px solid var(--bd)">
-        <canvas id="bnr-daily-chart" height="100"></canvas>
-      </div>
-      <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap">
-        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><div style="width:18px;height:2px;background:${tc};border-radius:1px"></div>UV</div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><div style="width:18px;height:2px;background:#34c759;border-radius:1px;border-top:2px dashed #34c759"></div>PV</div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><div style="width:18px;height:2px;background:#ff9f0a;border-radius:1px;border-top:2px dotted #ff9f0a"></div>매출</div>
-      </div>
-    </div>`;
+    <!-- 일별 추이 그래프는 상단 '그래프 확인' 버튼으로 팝업 확인 -->
+  `;
 
-  /* 일별 데이터 집계 */
+  /* 일별 데이터 집계 → 팝업용 캐시 */
   const dailyMap = {};
   TDB.all.filter(d=>d.banner===bannerName).forEach(d=>{
     const k = d.date.toISOString().slice(0,10);
@@ -2595,45 +2700,11 @@ function renderBnrDetail(bannerName) {
     dailyMap[k].pv  += d.pv;
     dailyMap[k].rev += d.rev;
   });
-  const dailyDates = Object.keys(dailyMap).sort();
-  const fmtAxisD = s => { const p=s.split('-'); return `${+p[1]}/${+p[2]}`; };
+  window._bnrChartCache = { page:'p2', name:bannerName, tc, tl, dailyMap };
 
-  setTimeout(()=>{
-    const el = document.getElementById('bnr-daily-chart');
-    if(!el) return;
-    if(window._bnrDailyChart) { window._bnrDailyChart.destroy(); window._bnrDailyChart=null; }
-    window._bnrDailyChart = new Chart(el.getContext('2d'),{
-      type:'line',
-      data:{
-        labels: dailyDates.map(fmtAxisD),
-        datasets:[
-          {label:'UV',  data:dailyDates.map(k=>dailyMap[k].uv),  borderColor:tc,       backgroundColor:tc+'18',      fill:false,tension:.35,pointRadius:dailyDates.length>60?0:3,pointHoverRadius:5,borderWidth:2,yAxisID:'y'},
-          {label:'PV',  data:dailyDates.map(k=>dailyMap[k].pv),  borderColor:'#34c759',backgroundColor:'#34c75918',  fill:false,tension:.35,pointRadius:dailyDates.length>60?0:3,pointHoverRadius:5,borderWidth:2,borderDash:[5,3],yAxisID:'y'},
-          {label:'매출', data:dailyDates.map(k=>dailyMap[k].rev), borderColor:'#ff9f0a',backgroundColor:'#ff9f0a18', fill:false,tension:.35,pointRadius:dailyDates.length>60?0:3,pointHoverRadius:5,borderWidth:2,borderDash:[2,3],yAxisID:'y2'},
-        ]
-      },
-      options:{
-        responsive:true, maintainAspectRatio:true,
-        interaction:{mode:'index',intersect:false},
-        plugins:{
-          legend:{display:false},
-          tooltip:{padding:10,cornerRadius:8,callbacks:{
-            title:ctx=>dailyDates[ctx[0].dataIndex]||ctx[0].label,
-            label:ctx=>{
-              const fns=['UV','PV','매출'];
-              const fmt = ctx.datasetIndex===2 ? NC : FC;
-              return ` ${fns[ctx.datasetIndex]}: ${fmt(ctx.parsed.y)}`;
-            }
-          }}
-        },
-        scales:{
-          x:{grid:{display:false},ticks:{font:{size:9},color:'#86868b',maxTicksLimit:16,maxRotation:0}},
-          y:{position:'left',grid:{color:'rgba(0,0,0,.05)'},border:{display:false},ticks:{font:{size:10},color:'#86868b',callback:v=>FM(v)},title:{display:true,text:'UV / PV',font:{size:10},color:'#86868b'}},
-          y2:{position:'right',grid:{display:false},border:{display:false},ticks:{font:{size:10},color:'#ff9f0a',callback:v=>FM(v)},title:{display:true,text:'매출',font:{size:10},color:'#ff9f0a'}}
-        }
-      }
-    });
-  },50);
+  /* 그래프 버튼 표시 */
+  const graphBtn = document.getElementById('btn-bnr-graph');
+  if(graphBtn) graphBtn.style.display = '';
 }
 
 /* 전체 배너 일평균 엑셀 다운로드 */
@@ -2745,6 +2816,9 @@ function clearP4BnrSelect() {
   if(area) area.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--t3);font-size:13px">배너를 선택하면 게시기간 전체의 일평균 데이터를 확인할 수 있습니다.</div>`;
   const badge = document.getElementById('p4-bnr-type-badge');
   if(badge) badge.style.display='none';
+  const graphBtn = document.getElementById('btn-p4-bnr-graph');
+  if(graphBtn) graphBtn.style.display='none';
+  window._bnrChartCache = null;
 }
 
 function renderP4BnrDetail(blockName) {
@@ -2827,20 +2901,10 @@ function renderP4BnrDetail(blockName) {
         </tbody>
       </table>
     </div>
-    <!-- 일별 추이 그래프 -->
-    <div style="margin-top:18px">
-      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:8px">일별 추이 <span style="font-size:11px;font-weight:400;color:var(--t3)">(X축: 날짜)</span></div>
-      <div style="background:var(--sf2);border-radius:12px;padding:14px 16px;border:1px solid var(--bd)">
-        <canvas id="p4-bnr-daily-chart" height="100"></canvas>
-      </div>
-      <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap">
-        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><div style="width:18px;height:2px;background:${tc};border-radius:1px"></div>UV</div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><div style="width:18px;height:2px;background:#34c759;border-radius:1px;border-top:2px dashed #34c759"></div>PV</div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><div style="width:18px;height:2px;background:#ff9f0a;border-radius:1px;border-top:2px dotted #ff9f0a"></div>매출</div>
-      </div>
-    </div>`;
+    <!-- 일별 추이 그래프는 상단 '그래프 확인' 버튼으로 팝업 확인 -->
+  `;
 
-  /* 일별 데이터 집계 */
+  /* 일별 데이터 집계 → 팝업용 캐시 */
   const dailyMap = {};
   CB.all.filter(d=>d.isBanner && d.block===blockName).forEach(d=>{
     const k = d.date.toISOString().slice(0,10);
@@ -2849,45 +2913,11 @@ function renderP4BnrDetail(blockName) {
     dailyMap[k].pv  += d.pv;
     dailyMap[k].rev += d.rev;
   });
-  const dailyDates = Object.keys(dailyMap).sort();
-  const fmtAxisD = s => { const p=s.split('-'); return `${+p[1]}/${+p[2]}`; };
+  window._bnrChartCache = { page:'p4', name:blockName, tc, tl, dailyMap };
 
-  setTimeout(()=>{
-    const el = document.getElementById('p4-bnr-daily-chart');
-    if(!el) return;
-    if(window._p4BnrDailyChart) { window._p4BnrDailyChart.destroy(); window._p4BnrDailyChart=null; }
-    window._p4BnrDailyChart = new Chart(el.getContext('2d'),{
-      type:'line',
-      data:{
-        labels: dailyDates.map(fmtAxisD),
-        datasets:[
-          {label:'UV',  data:dailyDates.map(k=>dailyMap[k].uv),  borderColor:tc,       backgroundColor:tc+'18',     fill:false,tension:.35,pointRadius:dailyDates.length>60?0:3,pointHoverRadius:5,borderWidth:2,yAxisID:'y'},
-          {label:'PV',  data:dailyDates.map(k=>dailyMap[k].pv),  borderColor:'#34c759',backgroundColor:'#34c75918', fill:false,tension:.35,pointRadius:dailyDates.length>60?0:3,pointHoverRadius:5,borderWidth:2,borderDash:[5,3],yAxisID:'y'},
-          {label:'매출', data:dailyDates.map(k=>dailyMap[k].rev), borderColor:'#ff9f0a',backgroundColor:'#ff9f0a18',fill:false,tension:.35,pointRadius:dailyDates.length>60?0:3,pointHoverRadius:5,borderWidth:2,borderDash:[2,3],yAxisID:'y2'},
-        ]
-      },
-      options:{
-        responsive:true, maintainAspectRatio:true,
-        interaction:{mode:'index',intersect:false},
-        plugins:{
-          legend:{display:false},
-          tooltip:{padding:10,cornerRadius:8,callbacks:{
-            title:ctx=>dailyDates[ctx[0].dataIndex]||ctx[0].label,
-            label:ctx=>{
-              const fns=['UV','PV','매출'];
-              const fmt = ctx.datasetIndex===2 ? NC : FC;
-              return ` ${fns[ctx.datasetIndex]}: ${fmt(ctx.parsed.y)}`;
-            }
-          }}
-        },
-        scales:{
-          x:{grid:{display:false},ticks:{font:{size:9},color:'#86868b',maxTicksLimit:16,maxRotation:0}},
-          y:{position:'left',grid:{color:'rgba(0,0,0,.05)'},border:{display:false},ticks:{font:{size:10},color:'#86868b',callback:v=>FM(v)},title:{display:true,text:'UV / PV',font:{size:10},color:'#86868b'}},
-          y2:{position:'right',grid:{display:false},border:{display:false},ticks:{font:{size:10},color:'#ff9f0a',callback:v=>FM(v)},title:{display:true,text:'매출',font:{size:10},color:'#ff9f0a'}}
-        }
-      }
-    });
-  },50);
+  /* 그래프 버튼 표시 */
+  const graphBtn = document.getElementById('btn-p4-bnr-graph');
+  if(graphBtn) graphBtn.style.display = '';
 }
 
 /* P4 전체 배너 일평균 엑셀 다운로드 */
