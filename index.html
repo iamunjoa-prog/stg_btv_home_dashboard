@@ -457,6 +457,31 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
       <div class="card chart-wrap"><div class="cft">운영 수량 추이</div><canvas id="c3c" height="200"></canvas><button class="chart-cap-btn" onclick="captureChart('c3c','운영수량추이_블록')">📷 저장</button></div>
       <div class="card chart-wrap"><div class="cft">일평균 UV 추이</div><canvas id="c3u" height="200"></canvas><button class="chart-cap-btn" onclick="captureChart('c3u','일평균UV추이')">📷 저장</button></div>
     </div>
+
+    <!-- ④ 블록별 이용 Data -->
+    <div class="sec" style="justify-content:space-between">
+      <span>④ 블록별 이용 Data <span class="sec-b">게시기간 전체 일평균 기준</span></span>
+      <button class="bsm" onclick="downloadAllP3BlockAvg()">⬇ 전체 블록 일평균 엑셀</button>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <div style="position:relative;flex:1;min-width:200px;max-width:400px">
+          <input id="p3-blk-search-inp" type="text" placeholder="블록명 검색 또는 선택..." autocomplete="off"
+            style="width:100%;padding:8px 36px 8px 12px;border:1px solid var(--bd);border-radius:9px;font-size:13px;font-family:inherit;color:var(--t1);background:var(--sf2);outline:none;transition:border-color .15s;box-sizing:border-box"
+            onfocus="this.style.borderColor='var(--blue)';showP3BlkDropdown()"
+            oninput="filterP3BlkList(this.value)"
+            onblur="setTimeout(()=>hideP3BlkDropdown(),180)">
+          <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:13px;pointer-events:none">▾</span>
+          <div id="p3-blk-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--sf);border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;z-index:200;font-size:12px"></div>
+        </div>
+        <div id="p3-blk-type-badge" style="display:none;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;background:rgba(0,113,227,.08);color:var(--blue)"></div>
+        <button class="bsm" id="btn-p3-blk-graph" style="display:none;white-space:nowrap" onclick="openBlkChartModal()">📈 그래프 확인</button>
+        <button class="bsm" onclick="clearP3BlkSelect()" style="white-space:nowrap">✕ 초기화</button>
+      </div>
+      <div id="p3-blk-detail-area">
+        <div style="text-align:center;padding:40px 0;color:var(--t3);font-size:13px">블록을 선택하면 게시기간 전체의 일평균 데이터를 확인할 수 있습니다.</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -533,7 +558,7 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
 </div>
 
 
-<!-- ════ 배너 일별 그래프 팝업 ════ -->
+<!-- ════ 배너/블록 일별 그래프 팝업 ════ -->
 <div id="bnrChartOv" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);align-items:center;justify-content:center" onclick="if(event.target===this)closeBnrChartModal()">
   <div style="background:var(--sf);border-radius:20px;box-shadow:0 32px 80px rgba(0,0,0,.25);padding:28px;width:760px;max-width:calc(100vw - 32px);max-height:90vh;overflow-y:auto">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
@@ -2429,6 +2454,201 @@ function closeAdmin() { document.getElementById('ovAdmin').classList.remove('ope
 document.getElementById('ovAdmin').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeAdmin(); });
 
 /* ═══════════════════════════════════════
+   ④ 블록별 이용 Data (P3 콘텐츠 블록)
+   CB.all(!isBanner) 전체 기간 일평균 집계
+═══════════════════════════════════════ */
+
+function getAllP3BlockAvgData() {
+  if(!CB||!CB.all) return [];
+  const map = {};
+  CB.all.filter(d=>!d.isBanner).forEach(d=>{
+    const k = d.block;
+    if(!map[k]) map[k]={uv:0,pv:0,rev:0,days:new Set(),src:d.src};
+    map[k].uv  += d.uv;
+    map[k].pv  += d.pv;
+    map[k].rev += d.rev;
+    map[k].days.add(d.date.toISOString().slice(0,10));
+  });
+  return Object.entries(map).map(([block,v])=>{
+    const days=[...v.days].sort();
+    return {
+      block,
+      src:       v.src,
+      startDate: days[0],
+      endDate:   days[days.length-1],
+      dayCount:  v.days.size,
+      avgUV:     v.uv  / v.days.size,
+      avgPV:     v.pv  / v.days.size,
+      avgRev:    v.rev / v.days.size,
+    };
+  }).sort((a,b)=>b.avgUV-a.avgUV);
+}
+
+function showP3BlkDropdown()  { filterP3BlkList(document.getElementById('p3-blk-search-inp').value); }
+function hideP3BlkDropdown()  { const d=document.getElementById('p3-blk-dropdown'); if(d) d.style.display='none'; }
+
+function filterP3BlkList(q) {
+  const dd = document.getElementById('p3-blk-dropdown');
+  if(!dd||!CB) return;
+  const all = getAllP3BlockAvgData();
+  const filtered = q ? all.filter(r=>r.block.toLowerCase().includes(q.toLowerCase())) : all;
+  if(!filtered.length) { dd.style.display='none'; return; }
+
+  /* CB_RULES 기반 색상/라벨 */
+  const ruleMap={};
+  CB_RULES.forEach(r=>ruleMap[r.key]=r);
+
+  dd.innerHTML = filtered.slice(0,80).map(r=>{
+    const rule = ruleMap[r.src]||{color:'#86868b',label:'블록'};
+    return `<div style="padding:8px 12px;cursor:pointer;border-bottom:1px solid rgba(0,0,0,.04);transition:background .1s;display:flex;align-items:center;gap:8px"
+      onmousedown="selectP3Block('${r.block.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')"
+      onmouseover="this.style.background='var(--sf2)'" onmouseout="this.style.background=''">
+      <span style="font-size:10px;font-weight:600;padding:2px 6px;border-radius:10px;background:${rule.color}22;color:${rule.color};flex-shrink:0">${rule.label}</span>
+      <span style="flex:1;font-size:12px;color:var(--t1)">${r.block}</span>
+      <span style="font-size:11px;color:var(--t3);flex-shrink:0">${r.dayCount}일</span>
+    </div>`;
+  }).join('');
+  dd.style.display='block';
+}
+
+function selectP3Block(blockName) {
+  const inp = document.getElementById('p3-blk-search-inp');
+  if(inp) inp.value = blockName;
+  hideP3BlkDropdown();
+  renderP3BlkDetail(blockName);
+}
+
+function clearP3BlkSelect() {
+  const inp = document.getElementById('p3-blk-search-inp');
+  if(inp) inp.value='';
+  hideP3BlkDropdown();
+  const area = document.getElementById('p3-blk-detail-area');
+  if(area) area.innerHTML=`<div style="text-align:center;padding:40px 0;color:var(--t3);font-size:13px">블록을 선택하면 게시기간 전체의 일평균 데이터를 확인할 수 있습니다.</div>`;
+  const badge = document.getElementById('p3-blk-type-badge');
+  if(badge) badge.style.display='none';
+  const graphBtn = document.getElementById('btn-p3-blk-graph');
+  if(graphBtn) graphBtn.style.display='none';
+  window._bnrChartCache = null;
+}
+
+function renderP3BlkDetail(blockName) {
+  const area = document.getElementById('p3-blk-detail-area');
+  if(!area||!CB) return;
+
+  const all = getAllP3BlockAvgData();
+  const r = all.find(x=>x.block===blockName);
+  if(!r){ area.innerHTML=`<div style="color:var(--t3);padding:20px;text-align:center">데이터 없음</div>`; return; }
+
+  const ruleMap={}; CB_RULES.forEach(ru=>ruleMap[ru.key]=ru);
+  const rule = ruleMap[r.src]||{color:'#86868b',label:'블록'};
+  const tc=rule.color, tl=rule.label;
+
+  /* 타입 뱃지 */
+  const badge = document.getElementById('p3-blk-type-badge');
+  if(badge){ badge.textContent=tl; badge.style.background=tc+'18'; badge.style.color=tc; badge.style.display=''; }
+
+  const fmtD = s=>{ if(!s) return '-'; const p=s.split('-'); return `${+p[1]}/${+p[2]}`; };
+  const period=`${fmtD(r.startDate)} ~ ${fmtD(r.endDate)} (${r.dayCount}일)`;
+
+  /* 주차별 집계 */
+  const weekRows = CB.weeks.map(w=>{
+    const rows=CB.all.filter(d=>!d.isBanner && d.block===blockName && d.week===w);
+    if(!rows.length) return null;
+    const days=new Set(rows.map(d=>d.date.toISOString().slice(0,10)));
+    const uv =rows.reduce((s,d)=>s+d.uv,0)/days.size;
+    const pv =rows.reduce((s,d)=>s+d.pv,0)/days.size;
+    const rev=rows.reduce((s,d)=>s+d.rev,0)/days.size;
+    const sorted=rows.map(d=>d.date).sort((a,b)=>a-b);
+    const wFmt=d=>`${d.getMonth()+1}/${String(d.getDate()).padStart(2,'0')}`;
+    return {week:w, dateRange:`${wFmt(sorted[0])}~${wFmt(sorted[sorted.length-1])}`, days:days.size, avgUV:uv, avgPV:pv, avgRev:rev};
+  }).filter(Boolean);
+
+  area.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+      ${[
+        {l:'게시기간 일평균 UV',  v:FC(r.avgUV),  c:tc},
+        {l:'게시기간 일평균 PV',  v:FC(r.avgPV),  c:'#34c759'},
+        {l:'게시기간 일평균 매출', v:NC(r.avgRev), c:'#ff9f0a'},
+      ].map(k=>`
+        <div style="background:var(--sf2);border-radius:12px;padding:14px 16px;border:1px solid var(--bd);border-top:3px solid ${k.c}">
+          <div class="kl" style="margin-bottom:5px">${k.l}</div>
+          <div class="kv" style="font-size:20px;color:${k.c}">${k.v}</div>
+        </div>`).join('')}
+    </div>
+    <div style="font-size:12px;color:var(--t3);margin-bottom:12px;padding:8px 12px;background:var(--sf2);border-radius:8px;border:1px solid var(--bd)">
+      📅 데이터 조회 기간 <strong style="color:var(--t1)">${period}</strong>　|　블록 유형 <strong style="color:${tc}">${tl}</strong>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:6px">주차별 일평균 상세</div>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th style="text-align:left;min-width:100px">주차</th>
+          <th style="text-align:left;min-width:110px">날짜 범위</th>
+          <th>운영일수</th>
+          <th class="sel">일평균 UV</th>
+          <th>일평균 PV</th>
+          <th>일평균 매출</th>
+        </tr></thead>
+        <tbody>
+          ${weekRows.map(w=>`
+            <tr>
+              <td style="text-align:left">${w.week}</td>
+              <td style="text-align:left;font-size:11px;color:var(--t3)">${w.dateRange}</td>
+              <td>${w.days}일</td>
+              <td class="sc">${FC(w.avgUV)}</td>
+              <td>${FC(w.avgPV)}</td>
+              <td>${NC(w.avgRev)}</td>
+            </tr>`).join('')}
+          <tr style="background:rgba(0,113,227,.04);font-weight:700;border-top:2px solid var(--blue)">
+            <td style="text-align:left;color:var(--blue)">전체 평균</td>
+            <td style="text-align:left;font-size:11px;color:var(--t3)">${fmtD(r.startDate)} ~ ${fmtD(r.endDate)}</td>
+            <td>${r.dayCount}일</td>
+            <td style="color:var(--blue)">${FC(r.avgUV)}</td>
+            <td>${FC(r.avgPV)}</td>
+            <td>${NC(r.avgRev)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- 일별 추이 그래프는 상단 '그래프 확인' 버튼으로 팝업 확인 -->
+  `;
+
+  /* 일별 데이터 집계 → 팝업 캐시 */
+  const dailyMap={};
+  CB.all.filter(d=>!d.isBanner && d.block===blockName).forEach(d=>{
+    const k=d.date.toISOString().slice(0,10);
+    if(!dailyMap[k]) dailyMap[k]={uv:0,pv:0,rev:0};
+    dailyMap[k].uv+=d.uv; dailyMap[k].pv+=d.pv; dailyMap[k].rev+=d.rev;
+  });
+  window._bnrChartCache = {page:'p3', name:blockName, tc, tl, dailyMap};
+
+  const graphBtn=document.getElementById('btn-p3-blk-graph');
+  if(graphBtn) graphBtn.style.display='';
+}
+
+/* 전체 블록 일평균 엑셀 다운로드 */
+function downloadAllP3BlockAvg() {
+  if(!CB||!CB.all){ alert('데이터가 로드되지 않았습니다.'); return; }
+  const data=getAllP3BlockAvgData();
+  const ruleMap={}; CB_RULES.forEach(r=>ruleMap[r.key]=r);
+  let csv='\uFEFF블록명,유형,게시기간(시작),게시기간(종료),데이터 일수(일),일평균 UV,일평균 PV,일평균 매출\n';
+  data.forEach(r=>{
+    const esc=v=>`"${String(v).replace(/"/g,'""')}"`;
+    const tl=(ruleMap[r.src]||{label:'블록'}).label;
+    csv+=[esc(r.block),esc(tl),esc(r.startDate),esc(r.endDate),r.dayCount,r.avgUV.toFixed(1),r.avgPV.toFixed(1),r.avgRev.toFixed(0)].join(',')+'\n';
+  });
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`P3_블록별_일평균_전체_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* P3 그래프 팝업 오픈 — 공용 openBnrChartModal 재사용 */
+function openBlkChartModal() { openBnrChartModal('p3'); }
+
+/* ═══════════════════════════════════════
    ④ 배너별 이용 Data (P2 섹션)
    TDB.all 전체 기간 일평균 집계
 ═══════════════════════════════════════ */
@@ -2502,7 +2722,7 @@ function selectBanner(bannerName) {
 ═══════════════════════════════════════ */
 function openBnrChartModal(page) {
   const cache = window._bnrChartCache;
-  if(!cache || cache.page !== page) return;
+  if(!cache) return;
 
   const { name, tc, tl, dailyMap } = cache;
   const dailyDates = Object.keys(dailyMap).sort();
@@ -2960,9 +3180,9 @@ function downloadAllP4BannerAvg() {
 /* ── 슬롯 색상 팔레트 (A/B/C/D) ── */
 const CMP_SLOTS = [
   {id:'A', bg:'#E6F1FB', text:'#185FA5', line:'#378ADD', dash:[]},
-  {id:'B', bg:'#EEEDFE', text:'#534AB7', line:'#7F77DD', dash:[5,3]},
-  {id:'C', bg:'#EAF3DE', text:'#3B6D11', line:'#639922', dash:[2,4]},
-  {id:'D', bg:'#FAEEDA', text:'#854F0B', line:'#BA7517', dash:[8,3,2,3]},
+  {id:'B', bg:'#EEEDFE', text:'#534AB7', line:'#7F77DD', dash:[]},
+  {id:'C', bg:'#EAF3DE', text:'#3B6D11', line:'#639922', dash:[]},
+  {id:'D', bg:'#FAEEDA', text:'#854F0B', line:'#BA7517', dash:[]},
 ];
 
 /* ── 페이지별 상태 ── */
@@ -3215,7 +3435,7 @@ function renderCmpResult(page) {
   /* 범례 */
   const legendItems = items.map(it =>
     `<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--t2)">
-      <svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="${it.pal.line}" stroke-width="2.5" ${it.pal.dash.length?`stroke-dasharray="${it.pal.dash.join(' ')}"`:''}></line></svg>
+      <svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="${it.pal.line}" stroke-width="2.5"></line></svg>
       ${it.pal.id} · ${it.name}
     </div>`).join('');
 
