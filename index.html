@@ -3446,28 +3446,183 @@ function renderCmpResult(page) {
     <div style="display:grid;grid-template-columns:${periodCols};gap:10px;margin-bottom:14px">${periodCards}</div>
     <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:8px">일평균 지표 비교</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px">${metricCards}</div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
-      <div style="font-size:12px;font-weight:700;color:var(--t2)">일별 추이 비교 <span style="font-size:11px;font-weight:400;color:var(--t3)">(X축: 게시 후 N일차)</span></div>
-      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+
+    <!-- 그래프 모드 탭 -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;border-bottom:1px solid var(--bd);padding-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:var(--t2)">일별 추이 비교</div>
+      <div style="display:flex;gap:2px;background:var(--sf2);border-radius:8px;padding:2px;margin-left:4px" id="${page}-view-tabs">
+        <button class="tb on" onclick="cmpSwitchView('${page}','merged',this)">통합 비교</button>
+        <button class="tb" onclick="cmpSwitchView('${page}','individual',this)">개별 그래프</button>
+      </div>
+      <span style="font-size:11px;color:var(--t3)">(X축: 게시 후 N일차)</span>
+    </div>
+
+    <!-- 통합 비교 영역 -->
+    <div id="${page}-view-merged">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
         <div style="display:flex;gap:2px;background:var(--sf2);border-radius:8px;padding:2px" id="${page}-cmp-tabs">
           <button class="tb on" onclick="cmpSwitchMetric('${page}','uv',this)">UV</button>
           <button class="tb" onclick="cmpSwitchMetric('${page}','pv',this)">PV</button>
           <button class="tb" onclick="cmpSwitchMetric('${page}','rev',this)">매출</button>
         </div>
-        <button class="bsm" onclick="cmpSaveImage('${page}')">📷 이미지 저장</button>
-        <button class="bsm" onclick="cmpDownloadExcel('${page}')">⬇ 엑셀</button>
+        <div style="display:flex;gap:6px">
+          <button class="bsm" onclick="cmpSaveImage('${page}')">📷 이미지 저장</button>
+          <button class="bsm" onclick="cmpDownloadExcel('${page}')">⬇ 엑셀</button>
+        </div>
       </div>
+      <div style="background:var(--sf2);border-radius:12px;padding:12px 16px;border:1px solid var(--bd);margin-bottom:8px">
+        <canvas id="${cmpChartId}" height="90"></canvas>
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:4px">${legendItems}</div>
     </div>
-    <div style="background:var(--sf2);border-radius:12px;padding:12px 16px;border:1px solid var(--bd);margin-bottom:8px">
-      <canvas id="${cmpChartId}" height="90"></canvas>
+
+    <!-- 개별 그래프 영역 -->
+    <div id="${page}-view-individual" style="display:none">
+      <div id="${page}-indiv-charts"></div>
     </div>
-    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:4px">${legendItems}</div>
+
     <div id="${cmpTableId}" style="display:none"></div>
   `;
 
-  /* 캐시 & 초기 차트 */
+  /* 캐시 & 초기 통합 차트 */
   window[`_cmpItems_${page}`] = items;
+  window[`_cmpIndivCharts_${page}`] = {};
+  /* 개별 그래프 렌더 캐시 초기화 (배너 변경 시 재빌드) */
+  const indivEl = document.getElementById(`${page}-indiv-charts`);
+  if(indivEl) delete indivEl.dataset.rendered;
   drawCmpChart(page, items, 'uv');
+}
+
+/* ── 통합/개별 뷰 전환 ── */
+function cmpSwitchView(page, mode, btn) {
+  btn.closest(`#${page}-view-tabs`).querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const mergedEl    = document.getElementById(`${page}-view-merged`);
+  const individualEl = document.getElementById(`${page}-view-individual`);
+  if(!mergedEl || !individualEl) return;
+
+  if(mode === 'merged') {
+    mergedEl.style.display = '';
+    individualEl.style.display = 'none';
+  } else {
+    mergedEl.style.display = 'none';
+    individualEl.style.display = '';
+    renderCmpIndividual(page);
+  }
+}
+
+/* ── 개별 그래프 렌더 ── */
+function renderCmpIndividual(page) {
+  const items = window[`_cmpItems_${page}`];
+  const container = document.getElementById(`${page}-indiv-charts`);
+  if(!items || !container) return;
+
+  /* 이미 렌더됐으면 스킵 (차트 인스턴스 재사용) */
+  if(container.dataset.rendered === 'true') return;
+  container.dataset.rendered = 'true';
+
+  const gridCols = items.length <= 2 ? `repeat(${items.length},1fr)` : `repeat(2,1fr)`;
+  container.innerHTML = items.map((it, i) => `
+    <div style="background:var(--sf2);border-radius:14px;padding:16px;border:1px solid var(--bd);margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;background:${it.pal.bg};color:${it.pal.text}">${it.pal.id}</span>
+          <span style="font-size:13px;font-weight:600;color:var(--t1)">${it.name}</span>
+          <span style="font-size:11px;color:var(--t3)">${it.daily.length}일</span>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="bsm" onclick="cmpIndivSaveImage('${page}',${i})">📷 저장</button>
+          <button class="bsm" onclick="cmpIndivExcel('${page}',${i})">⬇ 엑셀</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;margin-bottom:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><div style="width:18px;height:2px;background:${it.pal.line}"></div>UV</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><div style="width:18px;height:2px;background:#34c759"></div>PV</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><div style="width:18px;height:2px;background:#ff9f0a"></div>매출 (우축)</div>
+      </div>
+      <canvas id="${page}-indiv-chart-${i}" height="120"></canvas>
+    </div>`).join('');
+
+  /* 각 배너별 차트 그리기 */
+  window[`_cmpIndivCharts_${page}`] = {};
+  items.forEach((it, i) => {
+    setTimeout(() => {
+      const el = document.getElementById(`${page}-indiv-chart-${i}`);
+      if(!el) return;
+      const labels = it.daily.map((_,j) => `${j+1}일차`);
+      const inst = new Chart(el.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {label:'UV',   data:it.daily.map(d=>d.uv),  borderColor:it.pal.line, backgroundColor:it.pal.line+'18', fill:false, tension:.35, pointRadius:it.daily.length>60?0:3, pointHoverRadius:5, borderWidth:2, yAxisID:'y'},
+            {label:'PV',   data:it.daily.map(d=>d.pv),  borderColor:'#34c759',   backgroundColor:'#34c75918',      fill:false, tension:.35, pointRadius:it.daily.length>60?0:3, pointHoverRadius:5, borderWidth:2, yAxisID:'y'},
+            {label:'매출', data:it.daily.map(d=>d.rev), borderColor:'#ff9f0a',   backgroundColor:'#ff9f0a18',      fill:false, tension:.35, pointRadius:it.daily.length>60?0:3, pointHoverRadius:5, borderWidth:2, yAxisID:'y2'},
+          ]
+        },
+        options: {
+          responsive:true, maintainAspectRatio:true,
+          interaction:{mode:'index', intersect:false},
+          plugins:{
+            legend:{display:false},
+            tooltip:{padding:8, cornerRadius:8, callbacks:{
+              title: ctx => ctx[0].label,
+              label: ctx => {
+                const lbl = ['UV','PV','매출'][ctx.datasetIndex];
+                const fmt = ctx.datasetIndex===2 ? NC : FC;
+                return ` ${lbl}: ${fmt(ctx.parsed.y)}`;
+              }
+            }}
+          },
+          scales:{
+            x:{grid:{display:false}, ticks:{font:{size:9}, color:'#86868b', maxTicksLimit:20, maxRotation:0}},
+            y:{position:'left',  grid:{color:'rgba(0,0,0,.05)'}, border:{display:false}, ticks:{font:{size:10}, color:'#86868b', callback:v=>FM(v)}, title:{display:true, text:'UV / PV', font:{size:10}, color:'#86868b'}},
+            y2:{position:'right', grid:{display:false},          border:{display:false}, ticks:{font:{size:10}, color:'#ff9f0a', callback:v=>FM(v)}, title:{display:true, text:'매출',    font:{size:10}, color:'#ff9f0a'}}
+          }
+        }
+      });
+      window[`_cmpIndivCharts_${page}`][i] = inst;
+    }, 60 + i * 30);
+  });
+}
+
+/* ── 개별 그래프 이미지 저장 ── */
+function cmpIndivSaveImage(page, idx) {
+  const charts = window[`_cmpIndivCharts_${page}`];
+  const inst = charts && charts[idx];
+  if(!inst) { alert('차트가 아직 준비되지 않았습니다.'); return; }
+  const items = window[`_cmpItems_${page}`];
+  const name  = items && items[idx] ? items[idx].name.slice(0,20) : `${idx}`;
+  const pal   = items && items[idx] ? items[idx].pal.id : `${idx}`;
+  const url = inst.toBase64Image('image/png', 1);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `개별그래프_${pal}_${name}_${new Date().toISOString().slice(0,10)}.png`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+/* ── 개별 그래프 엑셀 ── */
+function cmpIndivExcel(page, idx) {
+  const items = window[`_cmpItems_${page}`];
+  const it = items && items[idx];
+  if(!it) { alert('데이터가 없습니다.'); return; }
+
+  const esc = v => `"${String(v).replace(/"/g,'""')}"`;
+  const headers = ['일차', 'UV', 'PV', '매출'];
+  let csv = '\uFEFF' + headers.map(esc).join(',') + '\n';
+  it.daily.forEach((d,i) => {
+    csv += [esc(`${i+1}일차`), Math.round(d.uv), Math.round(d.pv), Math.round(d.rev)].join(',') + '\n';
+  });
+  /* 일평균 행 */
+  csv += [esc('일평균'), it.avgData.avgUV.toFixed(1), it.avgData.avgPV.toFixed(1), it.avgData.avgRev.toFixed(0)].join(',') + '\n';
+
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `개별그래프_${it.pal.id}_${it.name.slice(0,20)}_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 /* ── 지표 탭 전환 ── */
