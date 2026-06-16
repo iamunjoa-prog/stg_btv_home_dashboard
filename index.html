@@ -2572,7 +2572,68 @@ function renderBnrDetail(bannerName) {
           </tr>
         </tbody>
       </table>
+    </div>
+    <!-- 일별 추이 그래프 -->
+    <div style="margin-top:18px">
+      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:8px">일별 추이 <span style="font-size:11px;font-weight:400;color:var(--t3)">(X축: 날짜)</span></div>
+      <div style="background:var(--sf2);border-radius:12px;padding:14px 16px;border:1px solid var(--bd)">
+        <canvas id="bnr-daily-chart" height="100"></canvas>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><div style="width:18px;height:2px;background:${tc};border-radius:1px"></div>UV</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><div style="width:18px;height:2px;background:#34c759;border-radius:1px;border-top:2px dashed #34c759"></div>PV</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><div style="width:18px;height:2px;background:#ff9f0a;border-radius:1px;border-top:2px dotted #ff9f0a"></div>매출</div>
+      </div>
     </div>`;
+
+  /* 일별 데이터 집계 */
+  const dailyMap = {};
+  TDB.all.filter(d=>d.banner===bannerName).forEach(d=>{
+    const k = d.date.toISOString().slice(0,10);
+    if(!dailyMap[k]) dailyMap[k]={uv:0,pv:0,rev:0};
+    dailyMap[k].uv  += d.uv;
+    dailyMap[k].pv  += d.pv;
+    dailyMap[k].rev += d.rev;
+  });
+  const dailyDates = Object.keys(dailyMap).sort();
+  const fmtAxisD = s => { const p=s.split('-'); return `${+p[1]}/${+p[2]}`; };
+
+  setTimeout(()=>{
+    const el = document.getElementById('bnr-daily-chart');
+    if(!el) return;
+    if(window._bnrDailyChart) { window._bnrDailyChart.destroy(); window._bnrDailyChart=null; }
+    window._bnrDailyChart = new Chart(el.getContext('2d'),{
+      type:'line',
+      data:{
+        labels: dailyDates.map(fmtAxisD),
+        datasets:[
+          {label:'UV',  data:dailyDates.map(k=>dailyMap[k].uv),  borderColor:tc,       backgroundColor:tc+'18',      fill:false,tension:.35,pointRadius:dailyDates.length>60?0:3,pointHoverRadius:5,borderWidth:2,yAxisID:'y'},
+          {label:'PV',  data:dailyDates.map(k=>dailyMap[k].pv),  borderColor:'#34c759',backgroundColor:'#34c75918',  fill:false,tension:.35,pointRadius:dailyDates.length>60?0:3,pointHoverRadius:5,borderWidth:2,borderDash:[5,3],yAxisID:'y'},
+          {label:'매출', data:dailyDates.map(k=>dailyMap[k].rev), borderColor:'#ff9f0a',backgroundColor:'#ff9f0a18', fill:false,tension:.35,pointRadius:dailyDates.length>60?0:3,pointHoverRadius:5,borderWidth:2,borderDash:[2,3],yAxisID:'y2'},
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:true,
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{display:false},
+          tooltip:{padding:10,cornerRadius:8,callbacks:{
+            title:ctx=>dailyDates[ctx[0].dataIndex]||ctx[0].label,
+            label:ctx=>{
+              const fns=['UV','PV','매출'];
+              const fmt = ctx.datasetIndex===2 ? NC : FC;
+              return ` ${fns[ctx.datasetIndex]}: ${fmt(ctx.parsed.y)}`;
+            }
+          }}
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{font:{size:9},color:'#86868b',maxTicksLimit:16,maxRotation:0}},
+          y:{position:'left',grid:{color:'rgba(0,0,0,.05)'},border:{display:false},ticks:{font:{size:10},color:'#86868b',callback:v=>FM(v)},title:{display:true,text:'UV / PV',font:{size:10},color:'#86868b'}},
+          y2:{position:'right',grid:{display:false},border:{display:false},ticks:{font:{size:10},color:'#ff9f0a',callback:v=>FM(v)},title:{display:true,text:'매출',font:{size:10},color:'#ff9f0a'}}
+        }
+      }
+    });
+  },50);
 }
 
 /* 전체 배너 일평균 엑셀 다운로드 */
@@ -2765,7 +2826,68 @@ function renderP4BnrDetail(blockName) {
           </tr>
         </tbody>
       </table>
+    </div>
+    <!-- 일별 추이 그래프 -->
+    <div style="margin-top:18px">
+      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:8px">일별 추이 <span style="font-size:11px;font-weight:400;color:var(--t3)">(X축: 날짜)</span></div>
+      <div style="background:var(--sf2);border-radius:12px;padding:14px 16px;border:1px solid var(--bd)">
+        <canvas id="p4-bnr-daily-chart" height="100"></canvas>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><div style="width:18px;height:2px;background:${tc};border-radius:1px"></div>UV</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><div style="width:18px;height:2px;background:#34c759;border-radius:1px;border-top:2px dashed #34c759"></div>PV</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><div style="width:18px;height:2px;background:#ff9f0a;border-radius:1px;border-top:2px dotted #ff9f0a"></div>매출</div>
+      </div>
     </div>`;
+
+  /* 일별 데이터 집계 */
+  const dailyMap = {};
+  CB.all.filter(d=>d.isBanner && d.block===blockName).forEach(d=>{
+    const k = d.date.toISOString().slice(0,10);
+    if(!dailyMap[k]) dailyMap[k]={uv:0,pv:0,rev:0};
+    dailyMap[k].uv  += d.uv;
+    dailyMap[k].pv  += d.pv;
+    dailyMap[k].rev += d.rev;
+  });
+  const dailyDates = Object.keys(dailyMap).sort();
+  const fmtAxisD = s => { const p=s.split('-'); return `${+p[1]}/${+p[2]}`; };
+
+  setTimeout(()=>{
+    const el = document.getElementById('p4-bnr-daily-chart');
+    if(!el) return;
+    if(window._p4BnrDailyChart) { window._p4BnrDailyChart.destroy(); window._p4BnrDailyChart=null; }
+    window._p4BnrDailyChart = new Chart(el.getContext('2d'),{
+      type:'line',
+      data:{
+        labels: dailyDates.map(fmtAxisD),
+        datasets:[
+          {label:'UV',  data:dailyDates.map(k=>dailyMap[k].uv),  borderColor:tc,       backgroundColor:tc+'18',     fill:false,tension:.35,pointRadius:dailyDates.length>60?0:3,pointHoverRadius:5,borderWidth:2,yAxisID:'y'},
+          {label:'PV',  data:dailyDates.map(k=>dailyMap[k].pv),  borderColor:'#34c759',backgroundColor:'#34c75918', fill:false,tension:.35,pointRadius:dailyDates.length>60?0:3,pointHoverRadius:5,borderWidth:2,borderDash:[5,3],yAxisID:'y'},
+          {label:'매출', data:dailyDates.map(k=>dailyMap[k].rev), borderColor:'#ff9f0a',backgroundColor:'#ff9f0a18',fill:false,tension:.35,pointRadius:dailyDates.length>60?0:3,pointHoverRadius:5,borderWidth:2,borderDash:[2,3],yAxisID:'y2'},
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:true,
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{display:false},
+          tooltip:{padding:10,cornerRadius:8,callbacks:{
+            title:ctx=>dailyDates[ctx[0].dataIndex]||ctx[0].label,
+            label:ctx=>{
+              const fns=['UV','PV','매출'];
+              const fmt = ctx.datasetIndex===2 ? NC : FC;
+              return ` ${fns[ctx.datasetIndex]}: ${fmt(ctx.parsed.y)}`;
+            }
+          }}
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{font:{size:9},color:'#86868b',maxTicksLimit:16,maxRotation:0}},
+          y:{position:'left',grid:{color:'rgba(0,0,0,.05)'},border:{display:false},ticks:{font:{size:10},color:'#86868b',callback:v=>FM(v)},title:{display:true,text:'UV / PV',font:{size:10},color:'#86868b'}},
+          y2:{position:'right',grid:{display:false},border:{display:false},ticks:{font:{size:10},color:'#ff9f0a',callback:v=>FM(v)},title:{display:true,text:'매출',font:{size:10},color:'#ff9f0a'}}
+        }
+      }
+    });
+  },50);
 }
 
 /* P4 전체 배너 일평균 엑셀 다운로드 */
@@ -2846,7 +2968,10 @@ function cmpAddSlot(page) {
   div.innerHTML = `
     <div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:5px;display:flex;align-items:center;gap:6px">
       <span style="display:inline-block;padding:2px 7px;border-radius:4px;background:${pal.bg};color:${pal.text};font-size:10px;font-weight:700">${pal.id}</span>
-      ${idx >= 2 ? `<button onclick="cmpRemoveSlot('${page}',${idx})" style="margin-left:auto;font-size:10px;color:var(--t3);border:none;background:transparent;cursor:pointer;padding:0">✕ 제거</button>` : ''}
+      ${idx >= 2
+        ? `<button onclick="cmpRemoveSlot('${page}',${idx})" style="margin-left:auto;font-size:11px;color:var(--t3);border:none;background:transparent;cursor:pointer;padding:2px 4px;line-height:1" title="슬롯 제거">✕ 제거</button>`
+        : `<button id="${page}cmp-clear-${idx}" onclick="cmpClearSlot('${page}',${idx})" style="display:none;margin-left:auto;font-size:11px;color:var(--t3);border:none;background:transparent;cursor:pointer;padding:2px 4px;line-height:1" title="선택 취소">✕</button>`
+      }
     </div>
     <div style="position:relative">
       <input id="${page}cmp-inp-${idx}" type="text" placeholder="배너명 검색..." autocomplete="off"
@@ -2939,6 +3064,22 @@ function cmpSelect(page, idx, name) {
   if(inp) inp.value = name;
   cmpHideDrop(page, idx);
   cmpState[page].slots[idx].name = name;
+  /* A/B 슬롯 ✕ 버튼 표시 */
+  if(idx < 2) {
+    const clrBtn = document.getElementById(`${page}cmp-clear-${idx}`);
+    if(clrBtn) clrBtn.style.display = '';
+  }
+  cmpTryRender(page);
+}
+
+/* A/B 슬롯 선택값만 취소 (슬롯은 유지) */
+function cmpClearSlot(page, idx) {
+  const inp = document.getElementById(`${page}cmp-inp-${idx}`);
+  if(inp) inp.value = '';
+  const clrBtn = document.getElementById(`${page}cmp-clear-${idx}`);
+  if(clrBtn) clrBtn.style.display = 'none';
+  cmpHideDrop(page, idx);
+  if(cmpState[page].slots[idx]) cmpState[page].slots[idx].name = null;
   cmpTryRender(page);
 }
 
@@ -2963,6 +3104,8 @@ function cmpReset(page) {
   const resultEl = document.getElementById(`${page}cmp-result`);
   if(resultEl) resultEl.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--t3);font-size:13px">배너를 2개 이상 선택하면 지표를 비교합니다.</div>`;
   cmpInit(page);
+  /* A/B ✕ 버튼 숨김 */
+  [0,1].forEach(i=>{ const b=document.getElementById(`${page}cmp-clear-${i}`); if(b) b.style.display='none'; });
 }
 
 /* ── 일별 데이터 N일차 추출 ── */
