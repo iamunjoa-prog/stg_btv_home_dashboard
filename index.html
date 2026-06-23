@@ -573,6 +573,7 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
 <div id="p6" class="pg">
   <div id="p6-spin" class="spinner-wrap"><div class="spinner"></div><span>오핫콘 데이터 불러오는 중...</span></div>
   <div id="p6-body" style="display:none">
+    <div id="o6-diag" style="margin-bottom:12px;display:none"></div>
 
     <!-- ① 주간 실적 Summary -->
     <div class="sec" style="justify-content:space-between">
@@ -611,7 +612,7 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
         <span style="font-size:12px;color:var(--t3)">Y</span><select id="o6-sy" onchange="rO6Scatter()" class="o6sel"></select>
         <span id="o6-corr" style="font-size:12px;color:var(--t2);margin-left:auto"></span>
       </div>
-      <canvas id="o6sc" height="150"></canvas>
+      <div style="height:220px;position:relative"><canvas id="o6sc"></canvas></div>
     </div>
 
     <!-- 시계열 -->
@@ -1069,15 +1070,16 @@ async function loadAll() {
   });
 
   try {
-    // 5탭 병렬 fetch (설정 포함)
+    // 병렬 fetch (설정/오핫콘/타이틀KPI 포함)
+    let _ohErr=null, _tkErr=null;
     const [csvHome, csvEv, csvCt, csvRaw, csvSettings, csvOhot, csvTk] = await Promise.all([
       fetchTab(CFG.tabs.home),
       fetchTab(CFG.tabs.tdbEv),
       fetchTab(CFG.tabs.tdbCt),
       fetchTab(CFG.tabs.cbRaw),
       fetchTab(CFG.tabs.settings).catch(()=>null),
-      fetchTab(CFG.tabs.ohot).catch(()=>null),
-      fetchTab(CFG.tabs.titleKpi).catch(()=>null),
+      fetchTab(CFG.tabs.ohot).catch(e=>{ _ohErr=e.message; return null; }),
+      fetchTab(CFG.tabs.titleKpi).catch(e=>{ _tkErr=e.message; return null; }),
     ]);
 
     // 설정 시트 먼저 파싱 (분류 규칙 적용) - 실패 시 기본값 유지
@@ -1088,6 +1090,8 @@ async function loadAll() {
     CB  = parseCbCSV(csvRaw);
     OH  = csvOhot ? parseOhotconCSV(csvOhot) : {all:[],weeks:[]};
     TK  = csvTk   ? parseTitleKpiCSV(csvTk)  : {all:[]};
+    OH._fetchErr=_ohErr; OH._tab=CFG.tabs.ohot;     OH._raw=csvOhot;
+    TK._fetchErr=_tkErr; TK._tab=CFG.tabs.titleKpi; TK._raw=csvTk;
 
     hsi = HD.weeks.length - 1;
     ti2 = TDB.weeks.length - 1;
@@ -3900,13 +3904,19 @@ function cmpSummaryExcel(page) {
 ═══════════════════════════════════════ */
 function rowsByDate(text) {
   return text.trim().split('\n').map(parseCSVLine).filter(r => {
-    const d = (r[0]||'').trim().replace(/[-\/]/g,'');
-    return /^[0-9]{6,8}$/.test(d);
+    const d = (r[0]||'').replace(/[^0-9]/g,'');   // 콤마/점/공백 등 제거 후 숫자만
+    return d.length>=6 && d.length<=8;
   });
+}
+/* A열 등 날짜 셀 → Date (콤마 포함 8자리 숫자도 처리) */
+function toDate(v) {
+  const digits = String(v||'').replace(/[^0-9]/g,'');
+  if(digits.length===8) return parseDate(digits);
+  return parseDate(v);
 }
 function parseOhotconCSV(text) {
   const all = rowsByDate(text).map(r => {
-    const dt = parseDate(r[0]); if(!dt) return null;
+    const dt = toDate(r[0]); if(!dt) return null;
     const title = (r[1]||'').trim();
     if(!title || title.startsWith('#')) return null;   // #으로 시작 = 타이틀 아님
     const uv = toNum(r[2]), pv = toNum(r[3]), kpi = toNum(r[4]);
@@ -3918,8 +3928,8 @@ function parseOhotconCSV(text) {
 }
 function parseTitleKpiCSV(text) {
   const all = rowsByDate(text).map(r => {
-    const dt = parseDate(r[0]); if(!dt) return null;
-    const svc = parseDate(r[1]);
+    const dt = toDate(r[0]); if(!dt) return null;
+    const svc = toDate(r[1]);
     const title = (r[2]||'').trim();
     if(!title || title.startsWith('#')) return null;
     const uv = toNum(r[3]), kpi = toNum(r[4]);
@@ -3960,50 +3970,76 @@ function pearson(xs, ys) {
 function o6CorrLabel(r){ if(r==null) return '-'; const a=Math.abs(r); return (a>=.7?'강한':a>=.4?'뚜렷한':a>=.2?'약한':'미미한')+' '+(r>=0?'양(+)':'음(-)')+' 상관'; }
 
 const O6_METRICS = [
-  {k:'ohUV', label:'오핫콘 일평균 UV'},
-  {k:'ohPV', label:'오핫콘 일평균 PV'},
-  {k:'ohKPI',label:'오핫콘 일평균 KPI'},
-  {k:'tkUV', label:'타이틀KPI 일평균 UV'},
-  {k:'tkKPI',label:'타이틀KPI 일평균 KPI'},
-  {k:'tdUV', label:'Today 일평균 UV'},
-  {k:'tdPV', label:'Today 일평균 PV'},
-  {k:'tdRev',label:'Today 일평균 매출'},
+  {k:'ohUV', label:'오핫콘 일별 UV'},
+  {k:'ohPV', label:'오핫콘 일별 PV'},
+  {k:'ohKPI',label:'오핫콘 일별 KPI'},
+  {k:'tkUV', label:'타이틀KPI 일별 UV'},
+  {k:'tkKPI',label:'타이틀KPI 일별 KPI'},
+  {k:'tdUV', label:'Today 일별 UV'},
+  {k:'tdPV', label:'Today 일별 PV'},
+  {k:'tdRev',label:'Today 일별 매출'},
 ];
 
 /* 관계분석 데이터 (타이틀별 전체 일평균) */
-function o6BuildRel() {
-  const agg = (rows, fields) => {
-    const m={uv:0,pv:0,kpi:0,rev:0,days:new Set()};
-    rows.forEach(d=>{ fields.forEach(fl=>{ m[fl]+=d[fl]||0; }); m.days.add(d.date.toISOString().slice(0,10)); });
-    const n=m.days.size||1; const o={};
-    fields.forEach(fl=>o[fl]=m[fl]/n); return o;
+function o6BuildDaily() {
+  const ds = d => d.date.toISOString().slice(0,10);
+  const rows = {};
+  const ensure = (t, dt, dstr) => {
+    const key = t+'||'+dstr;
+    if(!rows[key]) rows[key] = {title:t, date:dt, dstr, ohUV:null,ohPV:null,ohKPI:null, tkUV:null,tkKPI:null, tdUV:null,tdPV:null,tdRev:null, svc:null};
+    return rows[key];
   };
-  const ohTitles = [...new Set(OH.all.map(d=>d.title))];
-  const rows = ohTitles.map(title => {
-    const oRows = OH.all.filter(d=>d.title===title);
-    const tRows = (TK.all||[]).filter(d=>d.title===title);
-    const dRows = TDB.all.filter(d=> d.banner && title.length>=2 && d.banner.includes(title));
-    const o = agg(oRows, ['uv','pv','kpi']);
-    const t = tRows.length ? agg(tRows, ['uv','kpi']) : null;
-    const td = dRows.length ? agg(dRows, ['uv','pv','rev']) : null;
-    return {
-      title,
-      ohUV:o.uv, ohPV:o.pv, ohKPI:o.kpi,
-      tkUV: t?t.uv:null, tkKPI: t?t.kpi:null,
-      tdUV: td?td.uv:null, tdPV: td?td.pv:null, tdRev: td?td.rev:null,
-      matched: !!t, tdMatched: !!td,
-    };
-  }).sort((a,b)=>b.ohUV-a.ohUV);
-  return rows;
+  OH.all.forEach(d=>{ const o=ensure(d.title,d.date,ds(d)); o.ohUV=(o.ohUV||0)+d.uv; o.ohPV=(o.ohPV||0)+d.pv; o.ohKPI=(o.ohKPI||0)+d.kpi; });
+  (TK.all||[]).forEach(d=>{ const o=ensure(d.title,d.date,ds(d)); o.tkUV=(o.tkUV||0)+d.uv; o.tkKPI=(o.tkKPI||0)+d.kpi; if(d.svcDate&&!o.svc) o.svc=d.svcDate; });
+  // Today: 배너명에 타이틀명 포함 → 해당 (타이틀,날짜) 합산
+  const titles = [...new Set([...OH.all.map(d=>d.title), ...(TK.all||[]).map(d=>d.title)])].filter(t=>t && t.length>=2);
+  titles.forEach(t=>{
+    TDB.all.forEach(d=>{
+      if(d.banner && d.banner.includes(t)){
+        const o=ensure(t,d.date,d.date.toISOString().slice(0,10));
+        o.tdUV=(o.tdUV||0)+d.uv; o.tdPV=(o.tdPV||0)+d.pv; o.tdRev=(o.tdRev||0)+d.rev;
+      }
+    });
+  });
+  // 편성일자 보강 (타이틀별)
+  const svcByTitle={}; (TK.all||[]).forEach(d=>{ if(d.svcDate&&!svcByTitle[d.title]) svcByTitle[d.title]=d.svcDate; });
+  const arr = Object.values(rows).map(o=>{
+    const svc=o.svc||svcByTitle[o.title]||null;
+    return Object.assign(o, {svc, dayN: svc? Math.round((o.date-svc)/864e5)+1 : null});
+  });
+  arr.sort((a,b)=> a.title<b.title?-1 : a.title>b.title?1 : a.date-b.date);
+  return arr;
 }
 
 /* ── 렌더 ── */
 function renderP6() {
   if(!OH) return;
+  rO6Diag();
   rO6Week();
   rO6Sum();
   rO6Rank();
   rO6Rel();
+}
+function rO6Diag() {
+  const el=document.getElementById('o6-diag'); if(!el) return;
+  const msgs=[];
+  const chk=(d,label,tab)=>{
+    if(!d) return;
+    if(d._fetchErr){
+      msgs.push(`❌ <strong>${label}</strong> 탭 로드 실패: ${d._fetchErr}<br><span style="color:var(--t3)">→ 설정(⚙)에서 탭 이름이 정확히 '<strong>${tab}</strong>' 인지 확인하세요. (시트의 탭 이름과 100% 일치, 공백/대소문자 포함)</span>`);
+    } else {
+      const n=(d.all||[]).length;
+      if(n===0){
+        const lines=d._raw?d._raw.trim().split('\n').length:0;
+        msgs.push(`⚠️ <strong>${label}</strong> 탭은 불러왔으나 데이터 0건<br><span style="color:var(--t3)">→ A열(기준일자)이 YYYYMMDD(예 20260303) 형식인지, 헤더 아래에 데이터가 있는지 확인하세요. (원본 ${lines}줄 수신, 탭명 '${tab}')</span>`);
+      }
+    }
+  };
+  chk(OH,'오핫콘',(OH&&OH._tab)||CFG.tabs.ohot);
+  chk(TK,'타이틀 KPI',(TK&&TK._tab)||CFG.tabs.titleKpi);
+  if(!msgs.length){ el.style.display='none'; el.innerHTML=''; return; }
+  el.style.display='';
+  el.innerHTML=`<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:13px 15px;font-size:12.5px;line-height:1.9;color:#9a3412">${msgs.join('<hr style="border:none;border-top:1px solid #fed7aa;margin:8px 0">')}</div>`;
 }
 function rO6Week() {
   const sel=document.getElementById('o6-week'); if(!sel) return;
@@ -4067,23 +4103,30 @@ function rO6Rank() {
 }
 
 function rO6Rel() {
-  const rows = o6BuildRel();
-  window._o6rel = rows;
+  const rows = o6BuildDaily();
+  window._o6daily = rows;
   const el=document.getElementById('t6x');
   if(el){
-    const c=v=>v==null?'<span style="color:var(--t3)">-</span>':FC(v);
+    const c=v=>v==null?'<span style="color:var(--t3)">-</span>':(Number.isInteger(v)?v.toLocaleString():FC(v));
+    const fmtd=dstr=>{ const p=dstr.split('-'); return `${p[0]}.${p[1]}.${p[2]}`; };
     let h=`<thead><tr>
-      <th style="text-align:left;min-width:200px">타이틀</th>
-      <th>오핫콘 UV</th><th>오핫콘 KPI</th>
+      <th style="text-align:left;white-space:nowrap">기준일자</th>
+      <th style="text-align:left;min-width:180px">타이틀</th>
+      <th>편성N일차</th>
+      <th>오핫콘 UV</th><th>오핫콘 PV</th><th>오핫콘 KPI</th>
       <th>타이틀KPI UV</th><th>타이틀KPI KPI</th>
       <th>Today UV</th><th>Today PV</th><th>Today 매출</th>
     </tr></thead><tbody>`;
-    if(!rows.length) h+=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--t3)">데이터 없음</td></tr>`;
+    if(!rows.length) h+=`<tr><td colspan="11" style="text-align:center;padding:32px;color:var(--t3)">데이터 없음</td></tr>`;
     else rows.forEach(r=>{
-      h+=`<tr><td style="text-align:left;font-weight:600">${r.title}${r.matched?'':' <span style="font-size:10px;color:var(--t3)">(타이틀KPI 미존재)</span>'}</td>
-        <td>${FC(r.ohUV)}</td><td>${FC(r.ohKPI)}</td>
+      h+=`<tr>
+        <td style="text-align:left;white-space:nowrap;color:var(--t2)">${fmtd(r.dstr)}</td>
+        <td style="text-align:left;font-weight:600">${r.title}</td>
+        <td>${r.dayN!=null?r.dayN:'-'}</td>
+        <td>${c(r.ohUV)}</td><td>${c(r.ohPV)}</td><td>${c(r.ohKPI)}</td>
         <td>${c(r.tkUV)}</td><td>${c(r.tkKPI)}</td>
-        <td>${c(r.tdUV)}</td><td>${c(r.tdPV)}</td><td>${r.tdRev==null?'<span style="color:var(--t3)">-</span>':NC(r.tdRev)}</td></tr>`;
+        <td>${c(r.tdUV)}</td><td>${c(r.tdPV)}</td><td>${r.tdRev==null?'<span style="color:var(--t3)">-</span>':NC(r.tdRev)}</td>
+      </tr>`;
     });
     el.innerHTML=h+'</tbody>';
   }
@@ -4102,20 +4145,20 @@ function o6FillScatterSel() {
 }
 function rO6Scatter() {
   const el=document.getElementById('o6sc'); if(!el) return;
-  const rows=window._o6rel||[];
+  const rows=window._o6daily||[];
   const xk=(document.getElementById('o6-sx')||{}).value||'ohUV';
   const yk=(document.getElementById('o6-sy')||{}).value||'tkKPI';
-  const pts=rows.filter(r=>r[xk]!=null && r[yk]!=null).map(r=>({x:r[xk],y:r[yk],title:r.title}));
+  const pts=rows.filter(r=>r[xk]!=null && r[yk]!=null).map(r=>({x:r[xk],y:r[yk],title:r.title,dstr:r.dstr}));
   const r=pearson(pts.map(p=>p.x),pts.map(p=>p.y));
   const lbl=document.getElementById('o6-corr');
-  if(lbl) lbl.innerHTML = pts.length<2 ? '데이터 부족' : `상관계수 r = <strong>${r==null?'-':r.toFixed(3)}</strong> · n=${pts.length} <span style="color:var(--t3)">(${o6CorrLabel(r)})</span>`;
+  if(lbl) lbl.innerHTML = pts.length<2 ? '데이터 부족(겹치는 일자 없음)' : `상관계수 r = <strong>${r==null?'-':r.toFixed(3)}</strong> · n=${pts.length}일 <span style="color:var(--t3)">(${o6CorrLabel(r)})</span>`;
   const xl=O6_METRICS.find(m=>m.k===xk)?.label||xk, yl=O6_METRICS.find(m=>m.k===yk)?.label||yk;
   if(CH['o6sc']) CH['o6sc'].destroy();
   CH['o6sc']=new Chart(el.getContext('2d'),{
     type:'scatter',
-    data:{datasets:[{label:`${xl} vs ${yl}`,data:pts,backgroundColor:'rgba(0,113,227,.6)',borderColor:'#0071e3',pointRadius:5,pointHoverRadius:7}]},
-    options:{responsive:true,maintainAspectRatio:true,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.title}: (${FC(c.raw.x)}, ${FC(c.raw.y)})`}}},
+    data:{datasets:[{label:`${xl} vs ${yl}`,data:pts,backgroundColor:'rgba(0,113,227,.5)',borderColor:'#0071e3',pointRadius:4,pointHoverRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.title} ${c.raw.dstr}: (${FC(c.raw.x)}, ${FC(c.raw.y)})`}}},
       scales:{x:{title:{display:true,text:xl,font:{size:11}},grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{size:10},color:'#86868b',callback:v=>FM(v)}},
               y:{title:{display:true,text:yl,font:{size:11}},grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{size:10},color:'#86868b',callback:v=>FM(v)}}}}
   });
@@ -4123,10 +4166,10 @@ function rO6Scatter() {
 
 function o6FillTsSel() {
   const sel=document.getElementById('o6-ts-title'); if(!sel) return;
-  const rows=(window._o6rel||[]).filter(r=>r.matched);
-  const key=rows.map(r=>r.title).join('|');
+  const titles=[...new Set((TK.all||[]).map(d=>d.title))].sort();
+  const key=titles.join('|');
   if(sel.dataset.filledFor===key) return;
-  sel.innerHTML = rows.length ? rows.map(r=>`<option value="${r.title.replace(/"/g,'&quot;')}">${r.title}</option>`).join('') : '<option value="">타이틀KPI 매칭 타이틀 없음</option>';
+  sel.innerHTML = titles.length ? titles.map(t=>`<option value="${t.replace(/"/g,'&quot;')}">${t}</option>`).join('') : '<option value="">타이틀 KPI 데이터 없음</option>';
   sel.dataset.filledFor=key;
 }
 function rO6Ts() {
