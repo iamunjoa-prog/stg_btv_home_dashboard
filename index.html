@@ -206,6 +206,8 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
 
 .name-link{color:var(--blue);cursor:pointer;font-weight:600;text-decoration:none;border-bottom:1px dashed rgba(0,113,227,.35);transition:border-color .15s}
 .name-link:hover{border-bottom-color:var(--blue)}
+.o6sel{font-size:12px;padding:5px 10px;border-radius:7px;border:1px solid var(--bd);background:var(--sf);color:var(--t1);font-family:inherit;cursor:pointer;outline:none;max-width:300px}
+.o6sel:focus{border-color:var(--blue)}
 
 #bnr-search-inp:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px rgba(0,113,227,.12)}
 
@@ -262,6 +264,8 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
       <div class="m-tab-field"><span class="m-tab-lbl">P2 이벤트 탭</span><input class="m-tab-inp" id="cfg-t1" value="Today B tv_이벤트타입"></div>
       <div class="m-tab-field"><span class="m-tab-lbl">P2 콘텐츠 탭</span><input class="m-tab-inp" id="cfg-t2" value="Today B tv_콘텐츠타입"></div>
       <div class="m-tab-field"><span class="m-tab-lbl">P3 콘텐츠 블록 (raw)</span><input class="m-tab-inp" id="cfg-t3" value="콘텐츠 블록"></div>
+      <div class="m-tab-field"><span class="m-tab-lbl">오핫콘</span><input class="m-tab-inp" id="cfg-t5" value="오핫콘"></div>
+      <div class="m-tab-field"><span class="m-tab-lbl">타이틀 KPI</span><input class="m-tab-inp" id="cfg-t6" value="타이틀 KPI"></div>
     </div>
     <div class="m-btns">
       <button class="bsm" onclick="closeOv()">취소</button>
@@ -307,6 +311,7 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
       <button class="nb" onclick="goPage('p2',this)">Today B tv 이용 현황</button>
       <button class="nb" onclick="goPage('p3',this)">콘텐츠 블록 이용 현황</button>
       <button class="nb" onclick="goPage('p4',this)">배너 이용 현황</button>
+      <button class="nb" onclick="goPage('p6',this)">오핫콘 이용 현황</button>
     </nav>
     <div class="hdr-r">
       <div class="sync"><div class="dot" id="sdot"></div><span id="slbl">연결 중...</span></div>
@@ -564,6 +569,62 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
   </div>
 </div>
 
+<!-- ════ PAGE 6 — 오핫콘 이용 현황 ════ -->
+<div id="p6" class="pg">
+  <div id="p6-spin" class="spinner-wrap"><div class="spinner"></div><span>오핫콘 데이터 불러오는 중...</span></div>
+  <div id="p6-body" style="display:none">
+
+    <!-- ① 주간 실적 Summary -->
+    <div class="sec" style="justify-content:space-between">
+      <span>① 주간 실적 Summary <span class="sec-b">타이틀 단위 · 일평균 기준</span></span>
+      <button class="bsm" onclick="excelDown('t6s','오핫콘_주간Summary')">⬇ 엑셀</button>
+    </div>
+    <div class="card" style="margin-bottom:12px"><div class="tw"><table id="t6s"></table></div></div>
+
+    <!-- ② 선택 주차 타이틀 랭킹 -->
+    <div class="sec" style="justify-content:space-between">
+      <span>② 선택 주차 타이틀 랭킹 <span class="sec-b" id="o6wl"></span></span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="o6-week" onchange="o6selWeek(this.value)" class="o6sel"></select>
+        <button class="bsm" onclick="excelDown('t6r','오핫콘_타이틀랭킹')">⬇ 엑셀</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px"><div class="tw"><table id="t6r"></table></div></div>
+
+    <!-- ③ 관계분석 -->
+    <div class="sec"><span>③ 관계분석 <span class="sec-b">동일 타이틀 · 오핫콘 · 타이틀 KPI · Today B tv 비교</span></span></div>
+    <div style="font-size:12px;color:var(--t3);line-height:1.7;margin:-4px 0 12px">
+      타이틀명 기준으로 <strong>오핫콘</strong>(노출 UV·PV·KPI), <strong>타이틀 KPI</strong>(타이틀 자체 UV·KPI), <strong>Today B tv</strong>(배너명에 타이틀명이 포함된 배너의 UV·PV·매출)를 연결했습니다. 모든 값은 일평균 기준입니다.
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+        <button class="bsm" onclick="excelDown('t6x','오핫콘_관계분석')">⬇ 엑셀 다운로드</button>
+      </div>
+      <div class="tw"><table id="t6x"></table></div>
+    </div>
+
+    <!-- 산점도 -->
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="font-size:13px;font-weight:700;color:var(--t1)">상관 산점도</div>
+        <span style="font-size:12px;color:var(--t3)">X</span><select id="o6-sx" onchange="rO6Scatter()" class="o6sel"></select>
+        <span style="font-size:12px;color:var(--t3)">Y</span><select id="o6-sy" onchange="rO6Scatter()" class="o6sel"></select>
+        <span id="o6-corr" style="font-size:12px;color:var(--t2);margin-left:auto"></span>
+      </div>
+      <canvas id="o6sc" height="150"></canvas>
+    </div>
+
+    <!-- 시계열 -->
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="font-size:13px;font-weight:700;color:var(--t1)">타이틀 시계열 <span style="font-size:11px;font-weight:400;color:var(--t3)">(편성일 기준 N일차 · 운영 시점 표시)</span></div>
+        <select id="o6-ts-title" onchange="rO6Ts()" class="o6sel" style="min-width:220px;margin-left:auto"></select>
+      </div>
+      <canvas id="o6ts" height="150"></canvas>
+    </div>
+
+  </div>
+</div>
 
 <!-- ════ 배너/블록 일별 그래프 팝업 ════ -->
 <div id="bnrChartOv" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);align-items:center;justify-content:center" onclick="if(event.target===this)closeBnrChartModal()">
@@ -625,6 +686,8 @@ const DEFAULT_CFG = {
     tdbEv:    'Today B tv_이벤트타입',
     tdbCt:    'Today B tv_콘텐츠타입',
     cbRaw:    '콘텐츠 블록',
+    ohot:     '오핫콘',
+    titleKpi: '타이틀 KPI',
     settings: '대시보드_설정'
   }
 };
@@ -637,6 +700,7 @@ let HD=null,  hsi=0, htt='uv';
 let TDB=null, ti2=0, tt2='all';
 let CB=null,  ti3=0, tt3='all';
 let ti4=0, tt4='all';
+let OH=null, oi=0, TK=null;
 const CH = {};
 
 /* ═══════════════════════════════════════
@@ -865,6 +929,8 @@ function openOv() {
   document.getElementById('cfg-t1').value   = CFG.tabs.tdbEv;
   document.getElementById('cfg-t2').value   = CFG.tabs.tdbCt;
   document.getElementById('cfg-t3').value   = CFG.tabs.cbRaw;
+  if(document.getElementById('cfg-t5')) document.getElementById('cfg-t5').value = CFG.tabs.ohot;
+  if(document.getElementById('cfg-t6')) document.getElementById('cfg-t6').value = CFG.tabs.titleKpi;
   document.getElementById('ovCfg').classList.add('open');
 }
 function closeOv() { document.getElementById('ovCfg').classList.remove('open'); }
@@ -989,25 +1055,29 @@ async function connectAll() {
   CFG.tabs.tdbEv  = document.getElementById('cfg-t1').value.trim();
   CFG.tabs.tdbCt  = document.getElementById('cfg-t2').value.trim();
   CFG.tabs.cbRaw  = document.getElementById('cfg-t3').value.trim();
+  if(document.getElementById('cfg-t5')) CFG.tabs.ohot = document.getElementById('cfg-t5').value.trim() || CFG.tabs.ohot;
+  if(document.getElementById('cfg-t6')) CFG.tabs.titleKpi = document.getElementById('cfg-t6').value.trim() || CFG.tabs.titleKpi;
   closeOv();
   await loadAll();
 }
 
 async function loadAll() {
   setSS('loading', '데이터 불러오는 중...');
-  ['p1','p2','p3','p4'].forEach(id => {
+  ['p1','p2','p3','p4','p6'].forEach(id => {
     const s=document.getElementById(`${id}-spin`); if(s) s.style.display='';
     const b=document.getElementById(`${id}-body`); if(b) b.style.display='none';
   });
 
   try {
     // 5탭 병렬 fetch (설정 포함)
-    const [csvHome, csvEv, csvCt, csvRaw, csvSettings] = await Promise.all([
+    const [csvHome, csvEv, csvCt, csvRaw, csvSettings, csvOhot, csvTk] = await Promise.all([
       fetchTab(CFG.tabs.home),
       fetchTab(CFG.tabs.tdbEv),
       fetchTab(CFG.tabs.tdbCt),
       fetchTab(CFG.tabs.cbRaw),
       fetchTab(CFG.tabs.settings).catch(()=>null),
+      fetchTab(CFG.tabs.ohot).catch(()=>null),
+      fetchTab(CFG.tabs.titleKpi).catch(()=>null),
     ]);
 
     // 설정 시트 먼저 파싱 (분류 규칙 적용) - 실패 시 기본값 유지
@@ -1016,21 +1086,25 @@ async function loadAll() {
     HD  = parseHomeCSV(csvHome);
     TDB = parseTdbCSV(csvEv, csvCt);
     CB  = parseCbCSV(csvRaw);
+    OH  = csvOhot ? parseOhotconCSV(csvOhot) : {all:[],weeks:[]};
+    TK  = csvTk   ? parseTitleKpiCSV(csvTk)  : {all:[]};
 
     hsi = HD.weeks.length - 1;
     ti2 = TDB.weeks.length - 1;
     ti3 = CB.weeks.length - 1;
     ti4 = CB.weeks.length - 1;
+    oi  = Math.max(0, OH.weeks.length - 1);
 
     // 렌더
     renderP1();
     renderP2();
     renderP3();
     renderP4();
+    renderP6();
     // 인사이트 자동 생성
     setTimeout(()=>{ genInsight("p1"); genInsight("p2"); genInsight("p3"); }, 100);
 
-    ['p1','p2','p3','p4'].forEach(id => {
+    ['p1','p2','p3','p4','p6'].forEach(id => {
       const s=document.getElementById(`${id}-spin`); if(s) s.style.display='none';
       const b=document.getElementById(`${id}-body`); if(b) b.style.display='';
     });
@@ -1045,7 +1119,7 @@ async function loadAll() {
 
   } catch(e) {
     setSS('err', '연결 실패');
-    ['p1','p2','p3','p4'].forEach(id => {
+    ['p1','p2','p3','p4','p6'].forEach(id => {
       const spin = document.getElementById(`${id}-spin`);
       if(spin) spin.innerHTML = `<div style="color:#ff3b30;font-size:13px;text-align:center;padding:40px 20px;line-height:1.8">
         ⚠️ 데이터 로드 실패<br><strong>${e.message}</strong><br><br>
@@ -3817,6 +3891,275 @@ function cmpSummaryExcel(page) {
   a.href = url; a.download = `배너별지표비교_${tag}_${new Date().toISOString().slice(0,10)}.csv`;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/* ═══════════════════════════════════════
+   PAGE 6 — 오핫콘 이용 현황
+   오핫콘: A=기준일자 B=타이틀(# 제외) C=UV D=PV E=KPI
+   타이틀 KPI: A=기준일자 B=편성일자 C=타이틀 D=UV E=KPI
+═══════════════════════════════════════ */
+function rowsByDate(text) {
+  return text.trim().split('\n').map(parseCSVLine).filter(r => {
+    const d = (r[0]||'').trim().replace(/[-\/]/g,'');
+    return /^[0-9]{6,8}$/.test(d);
+  });
+}
+function parseOhotconCSV(text) {
+  const all = rowsByDate(text).map(r => {
+    const dt = parseDate(r[0]); if(!dt) return null;
+    const title = (r[1]||'').trim();
+    if(!title || title.startsWith('#')) return null;   // #으로 시작 = 타이틀 아님
+    const uv = toNum(r[2]), pv = toNum(r[3]), kpi = toNum(r[4]);
+    if(uv > 1e7) return null;
+    return { date:dt, title, uv, pv, kpi, week:getWL(dt) };
+  }).filter(Boolean);
+  const weeks = [...new Set(all.map(d=>d.week).filter(Boolean))].sort();
+  return { all, weeks };
+}
+function parseTitleKpiCSV(text) {
+  const all = rowsByDate(text).map(r => {
+    const dt = parseDate(r[0]); if(!dt) return null;
+    const svc = parseDate(r[1]);
+    const title = (r[2]||'').trim();
+    if(!title || title.startsWith('#')) return null;
+    const uv = toNum(r[3]), kpi = toNum(r[4]);
+    if(uv > 1e7) return null;
+    return { date:dt, svcDate:svc, title, uv, kpi };
+  }).filter(Boolean);
+  return { all };
+}
+
+/* 타이틀별 일평균 (해당 주차) */
+function ohDA(week) {
+  const map = {};
+  OH.all.filter(d=>d.week===week).forEach(d=>{
+    if(!map[d.title]) map[d.title]={uv:0,pv:0,kpi:0,days:new Set()};
+    const m=map[d.title]; m.uv+=d.uv; m.pv+=d.pv; m.kpi+=d.kpi; m.days.add(d.date.toISOString().slice(0,10));
+  });
+  return Object.entries(map)
+    .map(([title,v])=>({title, avgUV:v.uv/v.days.size, avgPV:v.pv/v.days.size, avgKPI:v.kpi/v.days.size}))
+    .sort((a,b)=>b.avgUV-a.avgUV);
+}
+/* 주간 통계 (운영수량 + 타이틀 일평균의 평균) */
+function oh6st(week) {
+  const arr = ohDA(week);
+  if(!arr.length) return {cnt:0, avgUV:0, avgPV:0, avgKPI:0};
+  const mean = k => arr.reduce((a,b)=>a+b[k],0)/arr.length;
+  return { cnt:arr.length, avgUV:mean('avgUV'), avgPV:mean('avgPV'), avgKPI:mean('avgKPI') };
+}
+
+/* 상관계수 */
+function pearson(xs, ys) {
+  const n=xs.length; if(n<2) return null;
+  const mx=xs.reduce((a,b)=>a+b,0)/n, my=ys.reduce((a,b)=>a+b,0)/n;
+  let sxy=0,sxx=0,syy=0;
+  for(let i=0;i<n;i++){ const dx=xs[i]-mx, dy=ys[i]-my; sxy+=dx*dy; sxx+=dx*dx; syy+=dy*dy; }
+  if(sxx===0||syy===0) return null;
+  return sxy/Math.sqrt(sxx*syy);
+}
+function o6CorrLabel(r){ if(r==null) return '-'; const a=Math.abs(r); return (a>=.7?'강한':a>=.4?'뚜렷한':a>=.2?'약한':'미미한')+' '+(r>=0?'양(+)':'음(-)')+' 상관'; }
+
+const O6_METRICS = [
+  {k:'ohUV', label:'오핫콘 일평균 UV'},
+  {k:'ohPV', label:'오핫콘 일평균 PV'},
+  {k:'ohKPI',label:'오핫콘 일평균 KPI'},
+  {k:'tkUV', label:'타이틀KPI 일평균 UV'},
+  {k:'tkKPI',label:'타이틀KPI 일평균 KPI'},
+  {k:'tdUV', label:'Today 일평균 UV'},
+  {k:'tdPV', label:'Today 일평균 PV'},
+  {k:'tdRev',label:'Today 일평균 매출'},
+];
+
+/* 관계분석 데이터 (타이틀별 전체 일평균) */
+function o6BuildRel() {
+  const agg = (rows, fields) => {
+    const m={uv:0,pv:0,kpi:0,rev:0,days:new Set()};
+    rows.forEach(d=>{ fields.forEach(fl=>{ m[fl]+=d[fl]||0; }); m.days.add(d.date.toISOString().slice(0,10)); });
+    const n=m.days.size||1; const o={};
+    fields.forEach(fl=>o[fl]=m[fl]/n); return o;
+  };
+  const ohTitles = [...new Set(OH.all.map(d=>d.title))];
+  const rows = ohTitles.map(title => {
+    const oRows = OH.all.filter(d=>d.title===title);
+    const tRows = (TK.all||[]).filter(d=>d.title===title);
+    const dRows = TDB.all.filter(d=> d.banner && title.length>=2 && d.banner.includes(title));
+    const o = agg(oRows, ['uv','pv','kpi']);
+    const t = tRows.length ? agg(tRows, ['uv','kpi']) : null;
+    const td = dRows.length ? agg(dRows, ['uv','pv','rev']) : null;
+    return {
+      title,
+      ohUV:o.uv, ohPV:o.pv, ohKPI:o.kpi,
+      tkUV: t?t.uv:null, tkKPI: t?t.kpi:null,
+      tdUV: td?td.uv:null, tdPV: td?td.pv:null, tdRev: td?td.rev:null,
+      matched: !!t, tdMatched: !!td,
+    };
+  }).sort((a,b)=>b.ohUV-a.ohUV);
+  return rows;
+}
+
+/* ── 렌더 ── */
+function renderP6() {
+  if(!OH) return;
+  rO6Week();
+  rO6Sum();
+  rO6Rank();
+  rO6Rel();
+}
+function rO6Week() {
+  const sel=document.getElementById('o6-week'); if(!sel) return;
+  sel.innerHTML = OH.weeks.map((w,i)=>`<option value="${i}"${i===oi?' selected':''}>${w}</option>`).join('') || '<option>주차 없음</option>';
+}
+function o6selWeek(v) { oi = +v||0; rO6Rank(); }
+
+function rO6Sum() {
+  const el=document.getElementById('t6s'); if(!el) return;
+  const sm={}; OH.weeks.forEach(w=>sm[w]=oh6st(w));
+  const secs=[
+    {key:'cnt',   label:'운영 수량',                isI:true},
+    {key:'avgUV', label:'타이틀 평균 UV (일평균)'},
+    {key:'avgPV', label:'타이틀 평균 PV (일평균)'},
+    {key:'avgKPI',label:'타이틀 평균 KPI (일평균)'},
+  ];
+  const wkRange = w => {
+    const rows=OH.all.filter(d=>d.week===w); if(!rows.length) return '';
+    const ds=rows.map(d=>d.date).sort((a,b)=>a-b);
+    const fmt=d=>`${d.getMonth()+1}/${String(d.getDate()).padStart(2,'0')}`;
+    return `(${fmt(ds[0])} ~ ${fmt(ds[ds.length-1])})`;
+  };
+  const li=oi;
+  let h=`<thead><tr><th style="text-align:left">구분</th>
+    ${OH.weeks.map((w,i)=>`<th${i===oi?' class="sel"':''} style="text-align:right">${w}<div style="font-size:10px;font-weight:400;opacity:.8;margin-top:2px">${wkRange(w)}</div></th>`).join('')}
+    <th style="text-align:right">WoW</th><th style="text-align:right">WoW(%)</th></tr></thead><tbody>`;
+  secs.forEach(sec=>{
+    const v=OH.weeks.map(w=>sm[w][sec.key]);
+    const cv=v[li], pv=li>0?v[li-1]:null;
+    const wowAbs=pv!=null?cv-pv:null;
+    const wowPct=pv!=null&&pv!==0?((cv-pv)/Math.abs(pv)*100).toFixed(1):null;
+    const wowAbsHtml=wowAbs!==null?`<span class="${wowAbs>0?'pos':'neg'}">${wowAbs>0?'+':''}${sec.isI?Math.round(wowAbs).toLocaleString():FC(wowAbs)}</span>`:'-';
+    const wowPctHtml=wowPct!==null?`<span class="${WC(wowPct)}">${WA(wowPct)}${Math.abs(parseFloat(wowPct))}%</span>`:'-';
+    h+=`<tr><td style="text-align:left;font-weight:600">${sec.label}</td>
+      ${v.map((x,i)=>`<td${i===oi?' class="sc"':''}>${sec.isI?N(x):FC(x)}</td>`).join('')}
+      <td style="text-align:right">${wowAbsHtml}</td><td style="text-align:right">${wowPctHtml}</td></tr>`;
+  });
+  el.innerHTML=h+'</tbody>';
+}
+
+function rO6Rank() {
+  const el=document.getElementById('t6r'); if(!el) return;
+  const sw=OH.weeks[oi], pw=oi>0?OH.weeks[oi-1]:null;
+  const wl=document.getElementById('o6wl'); if(wl) wl.textContent=sw||'';
+  const curr=ohDA(sw), prev=pw?ohDA(pw):[];
+  const pm={}; prev.forEach(p=>pm[p.title]=p);
+  let h=`<thead><tr><th style="width:44px">Rank</th><th style="text-align:left;min-width:240px">타이틀</th>
+    <th>일평균 UV</th><th>일평균 PV</th><th>일평균 KPI</th>
+    <th>UV WoW</th><th>PV WoW</th><th>KPI WoW</th></tr></thead><tbody>`;
+  if(!curr.length) h+=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--t3)">데이터 없음</td></tr>`;
+  else curr.forEach((r,i)=>{
+    const p=pm[r.title];
+    h+=`<tr><td style="text-align:center"><span class="rb2${i<3?' t3':''}">${i+1}</span></td>
+      <td style="text-align:left">${r.title}</td>
+      <td>${FC(r.avgUV)}</td><td>${FC(r.avgPV)}</td><td>${FC(r.avgKPI)}</td>
+      <td>${p?wCell(r.avgUV,p.avgUV):'<span class="ntag">NEW</span>'}</td>
+      <td>${p?wCell(r.avgPV,p.avgPV):'<span class="ntag">NEW</span>'}</td>
+      <td>${p?wCell(r.avgKPI,p.avgKPI):'<span class="ntag">NEW</span>'}</td></tr>`;
+  });
+  el.innerHTML=h+'</tbody>';
+}
+
+function rO6Rel() {
+  const rows = o6BuildRel();
+  window._o6rel = rows;
+  const el=document.getElementById('t6x');
+  if(el){
+    const c=v=>v==null?'<span style="color:var(--t3)">-</span>':FC(v);
+    let h=`<thead><tr>
+      <th style="text-align:left;min-width:200px">타이틀</th>
+      <th>오핫콘 UV</th><th>오핫콘 KPI</th>
+      <th>타이틀KPI UV</th><th>타이틀KPI KPI</th>
+      <th>Today UV</th><th>Today PV</th><th>Today 매출</th>
+    </tr></thead><tbody>`;
+    if(!rows.length) h+=`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--t3)">데이터 없음</td></tr>`;
+    else rows.forEach(r=>{
+      h+=`<tr><td style="text-align:left;font-weight:600">${r.title}${r.matched?'':' <span style="font-size:10px;color:var(--t3)">(타이틀KPI 미존재)</span>'}</td>
+        <td>${FC(r.ohUV)}</td><td>${FC(r.ohKPI)}</td>
+        <td>${c(r.tkUV)}</td><td>${c(r.tkKPI)}</td>
+        <td>${c(r.tdUV)}</td><td>${c(r.tdPV)}</td><td>${r.tdRev==null?'<span style="color:var(--t3)">-</span>':NC(r.tdRev)}</td></tr>`;
+    });
+    el.innerHTML=h+'</tbody>';
+  }
+  o6FillScatterSel();
+  rO6Scatter();
+  o6FillTsSel();
+  rO6Ts();
+}
+
+function o6FillScatterSel() {
+  [['o6-sx','ohUV'],['o6-sy','tkKPI']].forEach(([id,def])=>{
+    const sel=document.getElementById(id); if(!sel||sel.dataset.filled) return;
+    sel.innerHTML = O6_METRICS.map(m=>`<option value="${m.k}">${m.label}</option>`).join('');
+    sel.value = def; sel.dataset.filled='1';
+  });
+}
+function rO6Scatter() {
+  const el=document.getElementById('o6sc'); if(!el) return;
+  const rows=window._o6rel||[];
+  const xk=(document.getElementById('o6-sx')||{}).value||'ohUV';
+  const yk=(document.getElementById('o6-sy')||{}).value||'tkKPI';
+  const pts=rows.filter(r=>r[xk]!=null && r[yk]!=null).map(r=>({x:r[xk],y:r[yk],title:r.title}));
+  const r=pearson(pts.map(p=>p.x),pts.map(p=>p.y));
+  const lbl=document.getElementById('o6-corr');
+  if(lbl) lbl.innerHTML = pts.length<2 ? '데이터 부족' : `상관계수 r = <strong>${r==null?'-':r.toFixed(3)}</strong> · n=${pts.length} <span style="color:var(--t3)">(${o6CorrLabel(r)})</span>`;
+  const xl=O6_METRICS.find(m=>m.k===xk)?.label||xk, yl=O6_METRICS.find(m=>m.k===yk)?.label||yk;
+  if(CH['o6sc']) CH['o6sc'].destroy();
+  CH['o6sc']=new Chart(el.getContext('2d'),{
+    type:'scatter',
+    data:{datasets:[{label:`${xl} vs ${yl}`,data:pts,backgroundColor:'rgba(0,113,227,.6)',borderColor:'#0071e3',pointRadius:5,pointHoverRadius:7}]},
+    options:{responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.title}: (${FC(c.raw.x)}, ${FC(c.raw.y)})`}}},
+      scales:{x:{title:{display:true,text:xl,font:{size:11}},grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{size:10},color:'#86868b',callback:v=>FM(v)}},
+              y:{title:{display:true,text:yl,font:{size:11}},grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{size:10},color:'#86868b',callback:v=>FM(v)}}}}
+  });
+}
+
+function o6FillTsSel() {
+  const sel=document.getElementById('o6-ts-title'); if(!sel) return;
+  const rows=(window._o6rel||[]).filter(r=>r.matched);
+  const key=rows.map(r=>r.title).join('|');
+  if(sel.dataset.filledFor===key) return;
+  sel.innerHTML = rows.length ? rows.map(r=>`<option value="${r.title.replace(/"/g,'&quot;')}">${r.title}</option>`).join('') : '<option value="">타이틀KPI 매칭 타이틀 없음</option>';
+  sel.dataset.filledFor=key;
+}
+function rO6Ts() {
+  const el=document.getElementById('o6ts'); if(!el) return;
+  const sel=document.getElementById('o6-ts-title'); const title=sel?sel.value:'';
+  if(CH['o6ts']) CH['o6ts'].destroy();
+  if(!title) return;
+  const tk=(TK.all||[]).filter(d=>d.title===title).sort((a,b)=>a.date-b.date);
+  if(!tk.length) return;
+  const svc=(tk.find(d=>d.svcDate)||{}).svcDate || tk[0].date;
+  const dayN=dt=>Math.round((dt-svc)/864e5)+1;
+  const uvSeries=tk.map(d=>({x:dayN(d.date),y:d.uv}));
+  const kpiSeries=tk.map(d=>({x:dayN(d.date),y:d.kpi}));
+  const uvAt={}; tk.forEach(d=>uvAt[dayN(d.date)]=d.uv);
+  const ohDays=[...new Set(OH.all.filter(d=>d.title===title).map(d=>dayN(d.date)))].filter(n=>uvAt[n]!=null).map(n=>({x:n,y:uvAt[n]}));
+  const tdDays=[...new Set(TDB.all.filter(d=>title.length>=2 && d.banner && d.banner.includes(title)).map(d=>dayN(d.date)))].filter(n=>uvAt[n]!=null).map(n=>({x:n,y:uvAt[n]}));
+  CH['o6ts']=new Chart(el.getContext('2d'),{
+    type:'line',
+    data:{datasets:[
+      {label:'타이틀 UV',data:uvSeries,borderColor:'#0071e3',backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:2,yAxisID:'y'},
+      {label:'타이틀 KPI',data:kpiSeries,borderColor:'#34c759',backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:2,yAxisID:'y1'},
+      {label:'오핫콘 운영일',data:ohDays,showLine:false,pointStyle:'rectRot',pointRadius:8,borderColor:'#ff9500',backgroundColor:'#ff9500',yAxisID:'y'},
+      {label:'Today 운영일',data:tdDays,showLine:false,pointStyle:'triangle',pointRadius:8,borderColor:'#af52de',backgroundColor:'#af52de',yAxisID:'y'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:true,interaction:{mode:'nearest',intersect:false},
+      plugins:{legend:{position:'top',labels:{boxWidth:9,padding:10,font:{size:11},usePointStyle:true}},
+        tooltip:{callbacks:{title:items=>`편성 ${items[0].parsed.x}일차`}}},
+      scales:{
+        x:{type:'linear',title:{display:true,text:'편성일 기준 N일차',font:{size:11}},grid:{display:false},ticks:{font:{size:10},color:'#86868b',callback:v=>Number.isInteger(v)?v:''}},
+        y:{position:'left',title:{display:true,text:'UV',font:{size:10}},grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{size:10},color:'#86868b',callback:v=>FM(v)}},
+        y1:{position:'right',title:{display:true,text:'KPI',font:{size:10}},grid:{display:false},ticks:{font:{size:10},color:'#86868b',callback:v=>FM(v)}}
+      }}
+  });
 }
 
 /* ── 페이지 로드 후 초기 슬롯 생성 ── */
