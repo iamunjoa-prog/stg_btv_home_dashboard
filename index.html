@@ -424,10 +424,9 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
       <span>⑤ 배너 Data 비교 <span class="sec-b">최대 4개 · 게시 후 N일차 기준</span></span>
     </div>
     <div class="card" style="margin-bottom:12px">
-      <div id="p2cmp-slots" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px"></div>
+      <div id="p2cmp-slots" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px"></div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-        <button class="bsm" onclick="cmpAddSlot('p2')" id="p2cmp-add-btn">+ 배너 추가</button>
-        <button class="bsm" onclick="cmpReset('p2')">✕ 초기화</button>
+        <button class="bsm" onclick="cmpReset('p2')">✕ 전체 초기화</button>
         <span style="font-size:11px;color:var(--t3);margin-left:4px" id="p2cmp-hint">배너를 2개 이상 선택하면 비교합니다.</span>
       </div>
       <div id="p2cmp-result">
@@ -553,10 +552,9 @@ thead th.sel { background:#e0eaff !important; color:var(--blue) !important; }
       <span>⑤ 배너 Data 비교 <span class="sec-b">최대 4개 · 게시 후 N일차 기준</span></span>
     </div>
     <div class="card" style="margin-bottom:12px">
-      <div id="p4cmp-slots" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px"></div>
+      <div id="p4cmp-slots" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px"></div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-        <button class="bsm" onclick="cmpAddSlot('p4')" id="p4cmp-add-btn">+ 배너 추가</button>
-        <button class="bsm" onclick="cmpReset('p4')">✕ 초기화</button>
+        <button class="bsm" onclick="cmpReset('p4')">✕ 전체 초기화</button>
         <span style="font-size:11px;color:var(--t3);margin-left:4px" id="p4cmp-hint">배너를 2개 이상 선택하면 비교합니다.</span>
       </div>
       <div id="p4cmp-result">
@@ -3217,16 +3215,15 @@ const cmpState = {
   p4: { slots:[], chartInst:null, metric:'uv' },
 };
 
-/* ── 초기화: 페이지 로드 후 슬롯 2개 생성 ── */
+/* ── 초기화: 기본 4개 입력란(A·B·C·D) 생성 ── */
 function cmpInit(page) {
   cmpState[page].slots = [];
   cmpState[page].chartInst = null;
   cmpState[page].metric = 'uv';
   const slotsEl = document.getElementById(`${page}cmp-slots`);
   if(slotsEl) slotsEl.innerHTML = '';
-  // 기본 2개 슬롯
-  cmpAddSlot(page);
-  cmpAddSlot(page);
+  // 기본 4개 입력란
+  for(let i=0;i<4;i++) cmpAddSlot(page);
 }
 
 /* ── 슬롯 추가 (최대 4개) ── */
@@ -3244,48 +3241,18 @@ function cmpAddSlot(page) {
   div.innerHTML = `
     <div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:5px;display:flex;align-items:center;gap:6px">
       <span style="display:inline-block;padding:2px 7px;border-radius:4px;background:${pal.bg};color:${pal.text};font-size:10px;font-weight:700">${pal.id}</span>
-      ${idx >= 2
-        ? `<button onclick="cmpRemoveSlot('${page}',${idx})" style="margin-left:auto;font-size:11px;color:var(--t3);border:none;background:transparent;cursor:pointer;padding:2px 4px;line-height:1" title="슬롯 제거">✕ 제거</button>`
-        : `<button id="${page}cmp-clear-${idx}" onclick="cmpClearSlot('${page}',${idx})" style="display:none;margin-left:auto;font-size:11px;color:var(--t3);border:none;background:transparent;cursor:pointer;padding:2px 4px;line-height:1" title="선택 취소">✕</button>`
-      }
     </div>
     <div style="position:relative">
       <input id="${page}cmp-inp-${idx}" type="text" placeholder="배너명 검색..." autocomplete="off"
         style="width:100%;padding:7px 32px 7px 10px;border:1px solid var(--bd);border-radius:9px;font-size:12px;font-family:inherit;color:var(--t1);background:var(--sf2);outline:none;transition:border-color .15s;box-sizing:border-box"
         onfocus="this.style.borderColor='${pal.line}';cmpShowDrop('${page}',${idx})"
         oninput="cmpFilter('${page}',${idx},this.value)"
-        onblur="setTimeout(()=>cmpHideDrop('${page}',${idx}),180)">
-      <span style="position:absolute;right:9px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:12px;pointer-events:none">▾</span>
+        onblur="this.style.borderColor='var(--bd)';setTimeout(()=>cmpHideDrop('${page}',${idx}),180)">
+      <span id="${page}cmp-caret-${idx}" style="position:absolute;right:9px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:12px;pointer-events:none">▾</span>
+      <button id="${page}cmp-clear-${idx}" onmousedown="event.preventDefault()" onclick="cmpClearSlot('${page}',${idx})" title="선택 취소" style="display:none;position:absolute;right:5px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--t3);font-size:13px;line-height:1;padding:3px 6px;border-radius:6px">✕</button>
       <div id="${page}cmp-drop-${idx}" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--sf);border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:180px;overflow-y:auto;z-index:200;font-size:12px"></div>
     </div>`;
   slotsEl.appendChild(div);
-
-  /* 4개 꽉 찼으면 추가 버튼 숨김 */
-  const addBtn = document.getElementById(`${page}cmp-add-btn`);
-  if(addBtn) addBtn.style.display = st.slots.length >= 4 ? 'none' : '';
-}
-
-/* ── 슬롯 제거 (C/D만 가능) ── */
-function cmpRemoveSlot(page, idx) {
-  const st = cmpState[page];
-  st.slots.splice(idx, 1);
-  /* DOM 전체 재빌드 */
-  const slotsEl = document.getElementById(`${page}cmp-slots`);
-  slotsEl.innerHTML = '';
-  const backup = st.slots.map(s=>s.name);
-  st.slots = [];
-  backup.forEach(name => {
-    cmpAddSlot(page);
-    const newIdx = st.slots.length - 1;
-    if(name) {
-      st.slots[newIdx].name = name;
-      const inp = document.getElementById(`${page}cmp-inp-${newIdx}`);
-      if(inp) inp.value = name;
-    }
-  });
-  const addBtn = document.getElementById(`${page}cmp-add-btn`);
-  if(addBtn) addBtn.style.display = st.slots.length >= 4 ? 'none' : '';
-  cmpTryRender(page);
 }
 
 /* ── 드롭다운 ── */
@@ -3340,23 +3307,26 @@ function cmpSelect(page, idx, name) {
   if(inp) inp.value = name;
   cmpHideDrop(page, idx);
   cmpState[page].slots[idx].name = name;
-  /* A/B 슬롯 ✕ 버튼 표시 */
-  if(idx < 2) {
-    const clrBtn = document.getElementById(`${page}cmp-clear-${idx}`);
-    if(clrBtn) clrBtn.style.display = '';
-  }
+  /* 선택됨 → 입력란 ✕ 표시, ▾ 숨김 */
+  const clrBtn = document.getElementById(`${page}cmp-clear-${idx}`);
+  const caret  = document.getElementById(`${page}cmp-caret-${idx}`);
+  if(clrBtn) clrBtn.style.display = '';
+  if(caret)  caret.style.display = 'none';
   cmpTryRender(page);
 }
 
-/* A/B 슬롯 선택값만 취소 (슬롯은 유지) */
+/* 선택 취소 (입력란 유지 → 바로 재선택) */
 function cmpClearSlot(page, idx) {
   const inp = document.getElementById(`${page}cmp-inp-${idx}`);
   if(inp) inp.value = '';
   const clrBtn = document.getElementById(`${page}cmp-clear-${idx}`);
+  const caret  = document.getElementById(`${page}cmp-caret-${idx}`);
   if(clrBtn) clrBtn.style.display = 'none';
-  cmpHideDrop(page, idx);
+  if(caret)  caret.style.display = '';
   if(cmpState[page].slots[idx]) cmpState[page].slots[idx].name = null;
   cmpTryRender(page);
+  /* 바로 다른 배너를 고를 수 있게 입력란 포커스(목록 표시) */
+  if(inp) inp.focus();
 }
 
 /* ── 선택된 배너가 2개 이상이면 렌더 ── */
@@ -3380,8 +3350,6 @@ function cmpReset(page) {
   const resultEl = document.getElementById(`${page}cmp-result`);
   if(resultEl) resultEl.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--t3);font-size:13px">배너를 2개 이상 선택하면 지표를 비교합니다.</div>`;
   cmpInit(page);
-  /* A/B ✕ 버튼 숨김 */
-  [0,1].forEach(i=>{ const b=document.getElementById(`${page}cmp-clear-${i}`); if(b) b.style.display='none'; });
 }
 
 /* ── 일별 데이터 N일차 추출 ── */
