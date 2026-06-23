@@ -4214,7 +4214,14 @@ function initCmpSections() {
 (async () => {
   try {
     const saved = localStorage.getItem('dashCfg');
-    if(saved) { const s=JSON.parse(saved); if(s.sid) CFG=s; }
+    if(saved) {
+      const s=JSON.parse(saved);
+      if(s.sid) {
+        CFG.sid = s.sid;
+        // 저장된 탭 설정을 기본값과 병합 (오핫콘/타이틀 KPI 등 신규 탭 누락 방지)
+        CFG.tabs = Object.assign({}, DEFAULT_CFG.tabs, s.tabs || {});
+      }
+    }
   } catch(e){}
   await loadAll();
   initCmpSections();
